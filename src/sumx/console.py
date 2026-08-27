@@ -31,6 +31,7 @@ import time;
 from sumtui import Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, MarkdownView, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
 
 from . import __version__;
+from .config import default_config_path, load_config, resolve_theme, save_config, theme_names;
 from .helpdb import TOPICS, find_topic, index_markdown, topic_names;
 from .interpreter import HELP_TEXT, Interpreter;
 from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, FormRequest, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
@@ -62,9 +63,12 @@ def _shell_output_lines(completed):
 
 
 class SumXConsoleApp:
-    def __init__(self, interpreter=None, database=":memory:", theme="XBASE"):
+    def __init__(self, interpreter=None, database=":memory:", theme=None, config_path=None, config=None):
         self.interpreter = interpreter or Interpreter(database=database);
-        self.app = Application("sumX", theme=theme);
+        self.config_path = Path(config_path).expanduser() if config_path is not None else default_config_path();
+        self.config = dict(config) if isinstance(config, dict) else load_config(self.config_path);
+        selected_theme = resolve_theme(theme, self.config);
+        self.app = Application("sumX", theme=selected_theme);
         self.command = CommandWindow(prompt=". ", on_submit=self._submit);
         self.status = StatusBar(self.interpreter.runtime.db.status());
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);
@@ -89,11 +93,18 @@ class SumXConsoleApp:
         self.bar.install(self.app);
         self.app.bind("alt+f", lambda: self.open_menu(0));
         self.app.bind("alt+d", lambda: self.open_menu(1));
-        self.app.bind("alt+h", lambda: self.open_menu(2));
+        self.app.bind("alt+o", lambda: self.open_menu(2));
+        self.app.bind("alt+h", lambda: self.open_menu(3));
         body = VBox(Panel(self.command, title="sumX Command", content_style="command"), self.status, self.bar, sizes=[None, 1, 1]);
         self.desktop = MenuDesktop(self.menu, body);
         self.app.set_root(self.desktop);
         self.app.focus.set(self.command);
+
+    def _theme_menu(self):
+        return Menu("Theme", [
+            MenuItem(name, lambda selected=name: self.set_theme(selected), radio=lambda selected=name: self.app.theme.name.casefold() == selected.casefold())
+            for name in theme_names()
+        ]);
 
     def _console_menus(self):
         return [
@@ -104,10 +115,82 @@ class SumXConsoleApp:
                 MenuItem("Work areas", self._areas, "F2"),
                 MenuItem("Browse", self._browse, "F5"),
             ]),
+            Menu("Options", [
+                MenuItem("Theme", submenu=self._theme_menu()),
+                Separator(),
+                MenuItem("Save configuration", self.save_configuration),
+            ]),
             Menu("Help", [
                 MenuItem("sumX Help", self._help, "F1"),
+                MenuItem("Configuration", self._configuration_help),
             ]),
         ];
+
+    def set_theme(self, name):
+        selected = resolve_theme(name, self.config);
+        self.app.set_theme(selected);
+        self.command.write("Theme -> {}".format(self.app.theme.name), style="command_info");
+        self.app.invalidate();
+        return True;
+
+    def _configuration_snapshot(self):
+        data = dict(self.config);
+        data["theme"] = self.app.theme.name;
+        if hasattr(self, "editor"):
+            editor = dict(data.get("editor", {})) if isinstance(data.get("editor"), dict) else {};
+            editor.update({
+                "show_spaces": bool(self.editor.show_spaces),
+                "show_tabs": bool(self.editor.show_tabs),
+                "show_line_endings": bool(self.editor.show_line_endings),
+                "show_control_chars": bool(self.editor.show_control_chars),
+            });
+            data["editor"] = editor;
+        return data;
+
+    def save_configuration(self):
+        try:
+            self.config = self._configuration_snapshot();
+            target = save_config(self.config, self.config_path);
+            message = "Configuration saved: {}".format(target);
+            if hasattr(self, "editor"):
+                self._update_editor_status(message);
+            else:
+                self.command.write(message, style="command_info");
+            self.app.invalidate();
+            return True;
+        except Exception as exc:
+            message = "Configuration error: {}".format(exc);
+            if hasattr(self, "editor"):
+                self._update_editor_status(message);
+            else:
+                self.command.write_error(message);
+            self.app.invalidate();
+            return False;
+
+    def _configuration_help(self):
+        text = """# sumX configuration
+
+sumX can persist its interactive theme and editor display options.
+
+## Theme
+
+Open **Options > Theme** and choose any theme supplied by sumTUI, including XBASE, Ralesk's MC, DBASE, FOXPRO, DOS, Dark and Light.
+
+Use **Options > Save configuration** to make the current selection persistent.
+
+The default file is `~/.config/sumx/config.json`, or `$XDG_CONFIG_HOME/sumx/config.json` when XDG_CONFIG_HOME is set.
+
+The command line can override the saved theme for one session:
+
+```bash
+sumx --theme "Ralesk's MC" programa.prg
+sumx --theme DOS --run programa.prg
+```
+
+Use `sumx --list-themes` to list installed themes.
+""";
+        self._show_help(text, title="sumX Configuration");
+        return True;
 
     def open_menu(self, index=None):
         if index is None:
@@ -997,8 +1080,8 @@ class SumXProgramApp(SumXConsoleApp):
     APPEND and FORM services, while no development menus or command prompt are
     shown unless the program explicitly requests them in a future extension.
     """
-    def __init__(self, interpreter=None, database=":memory:", theme="XBASE"):
-        super().__init__(interpreter=interpreter, database=database, theme=theme);
+    def __init__(self, interpreter=None, database=":memory:", theme=None, config_path=None, config=None):
+        super().__init__(interpreter=interpreter, database=database, theme=theme, config_path=config_path, config=config);
         self.command.clear();
         self.command.show_prompt = False;
         self.command.on_submit = None;

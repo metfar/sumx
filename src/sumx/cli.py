@@ -32,6 +32,7 @@ from sumtui import InputSpec, read_input;
 
 from . import __version__;
 from .compiler import check_source, compile_file;
+from .config import load_config, resolve_theme, theme_names;
 from .console import SumXConsoleApp, SumXProgramApp, plain_repl, print_result;
 from .editor_app import SumXEditorApp;
 from .interpreter import Interpreter;
@@ -185,7 +186,9 @@ def main(argv=None):
     parser.add_argument("-o", "--output", help="output file for --compile; use - for stdout");
     parser.add_argument("--database", default=":memory:", help="SQLite database path (default: in-memory)");
     parser.add_argument("--plain", action="store_true", help="force textual terminal I/O; with --run, disable sumTUI dialogs/forms/browse windows");
-    parser.add_argument("--theme", default="XBASE", help="sumTUI theme for interactive mode");
+    parser.add_argument("--theme", default=None, help="sumTUI theme for this interactive session; saved configuration is used when omitted");
+    parser.add_argument("--config", help="configuration file path (default: XDG_CONFIG_HOME/sumx/config.json or ~/.config/sumx/config.json)");
+    parser.add_argument("--list-themes", action="store_true", help="list available sumTUI themes and exit");
     parser.add_argument("--debug-level", default="OFF", choices=["off", "info", "debug", "trace"], type=str.lower, help="diagnostic verbosity; default: off");
     parser.add_argument("--line-continuation", choices=["backslash", "semicolon"], default="backslash", help="physical-line continuation style; default: backslash");
     parser.add_argument("--ampersand-comment", action="store_true", help="treat && as an xBase inline comment instead of logical AND");
@@ -194,6 +197,9 @@ def main(argv=None):
     args = parser.parse_args(argv);
     if args.version:
         print("sumX {}".format(__version__));
+        return 0;
+    if args.list_themes:
+        print("\n".join(theme_names()));
         return 0;
     if args.self_test:
         return self_test();
@@ -232,6 +238,8 @@ def main(argv=None):
         except Exception as exc:
             print("Check error: {}".format(exc), file=sys.stderr);
             return 1;
+    config = load_config(args.config);
+    selected_theme = resolve_theme(args.theme, config);
     interpreter = Interpreter(database=args.database);
     interpreter.runtime.set_debug_level(args.debug_level);
     interpreter.runtime.set_line_continuation(args.line_continuation.upper());
@@ -251,7 +259,7 @@ def main(argv=None):
             if args.plain or not sys.stdin.isatty() or not sys.stdout.isatty():
                 results = interpreter.run_file(args.run, interactive=False);
                 return _process_file_results(interpreter, console, diagnostics, results, plain=True);
-            runner = SumXProgramApp(interpreter=interpreter, theme=args.theme);
+            runner = SumXProgramApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config);
             code = runner.run_file(args.run);
             for line, style in runner.history_lines():
                 target = diagnostics if style == "command_error" else console;
@@ -265,13 +273,13 @@ def main(argv=None):
             diagnostics.print("Opening a source file requires an interactive terminal. Use --run to execute it.", style="bold red");
             return 2;
         try:
-            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme).run();
+            return SumXEditorApp(args.file, interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
         except Exception as exc:
             diagnostics.print("Error: {}".format(exc), style="bold red");
             return 1;
     if args.plain or not sys.stdin.isatty() or not sys.stdout.isatty():
         return plain_repl(interpreter);
-    return SumXConsoleApp(interpreter=interpreter, theme=args.theme).run();
+    return SumXConsoleApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
 
 
 if __name__ == "__main__":

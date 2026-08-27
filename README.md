@@ -1,4 +1,4 @@
-# sumX 0.1.4
+# sumX 0.1.5
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -7,8 +7,8 @@ sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The cu
 Install sumTUI first, then sumX:
 
 ```bash
-pip install ./sumtui-0.5.2-py3-none-any.whl
-pip install ./sumx-0.1.4-py3-none-any.whl
+pip install ./sumtui-0.5.10-py3-none-any.whl
+pip install ./sumx-0.1.5-py3-none-any.whl
 ```
 
 Run the sumTUI command window:
@@ -28,6 +28,8 @@ sumx --compile program.prg -o output.py  # choose the generated file
 sumx --compile program.prg -o -          # generated Python on stdout
 sumx --plain                             # plain command REPL
 sumx --plain --run program.prg           # textual program I/O, no TUI dialogs/forms
+sumx --list-themes                        # available sumTUI themes
+sumx --theme "Ralesk's MC" program.prg  # one-session theme override
 sumx --line-continuation semicolon --run old.prg  # old xBase continuation
 sumx --ampersand-comment --run old.prg            # && comments from first line
 sumx -c 'A=SQL.SELECT count(*) FROM customers;'
@@ -102,7 +104,44 @@ File  Edit  Search  Run  Debug  Options  Help
 
 **F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/H` opens the corresponding top-level menu.
 
-File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls whitespace/control-character visualization.
+File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
+
+
+### Themes and persistent configuration
+
+Both the ordinary sumX command environment and the source editor have **Options > Theme** and **Options > Save configuration**. The program-only `sumx --run` runtime has no assistant menu, but it still uses the saved theme for its dialogs, GET/READ fields, BROWSE and APPEND windows.
+
+Available themes come from sumTUI. With sumTUI 0.5.10 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
+
+The default configuration path is:
+
+```text
+~/.config/sumx/config.json
+```
+
+When `XDG_CONFIG_HOME` is defined, sumX uses:
+
+```text
+$XDG_CONFIG_HOME/sumx/config.json
+```
+
+The source editor saves its current theme together with the visibility state for spaces, tabs, line endings and control characters. Configuration is written only when **Save configuration** is selected.
+
+A command-line theme overrides the saved theme for that invocation without changing the file unless you explicitly save configuration from the interactive environment:
+
+```bash
+sumx --theme "Ralesk's MC" program.prg
+sumx --theme DOS --run program.prg
+sumx --list-themes
+```
+
+A separate configuration file is useful for demonstrations and classes:
+
+```bash
+sumx --config ./classroom-sumx.json program.prg
+```
+
+This is environment configuration rather than sumX language syntax, so there is intentionally no `.prg` statement that silently rewrites the user's editor preferences.
 
 `Ctrl+F9` runs the current buffer and `Alt+F9` checks it. The buffer may be run without a save/reload cycle. Contextual F1 help and a separate Editor Keys help page are available from Help.
 
@@ -740,7 +779,9 @@ examples/bash/run_legacy.sh
 examples/bash/compile_and_run.sh
 examples/bash/open_editor.sh
 examples/bash/run_interactive.sh
+examples/bash/theme_config.sh
 examples/python/run_interactive.py
+examples/python/config_theme.py
 examples/interactive_runtime.prg
 ```
 
@@ -753,7 +794,9 @@ python3 examples/python/generated_conditionals.py
 bash examples/bash/compile_and_run.sh
 examples/bash/open_editor.sh
 bash examples/bash/run_interactive.sh
+bash examples/bash/theme_config.sh
 python3 examples/python/run_interactive.py
+python3 examples/python/config_theme.py
 sumx --run examples/interactive_runtime.prg
 ```
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.5
+
+- Added persistent sumX application configuration at `~/.config/sumx/config.json`, respecting `$XDG_CONFIG_HOME`; `--config FILE` can select an alternate file.
+- Added **Options > Theme** and **Options > Save configuration** to both the command environment and source editor.
+- The source editor now restores saved whitespace/control-character visibility options together with the selected theme.
+- `sumx --run` remains assistant-free but now automatically uses the saved theme for interactive windows, BROWSE, APPEND, GET/READ and dialogs.
+- Added `--theme` as a per-session override and `--list-themes` to show the themes supplied by sumTUI.
+- Added Python and Bash configuration/theme examples and updated built-in configuration help and README documentation.
+- Requires sumTUI 0.5.10 or newer.
+
 ## 0.1.4
 
 - `sumx --run file.prg` now uses the full interactive sumTUI application runtime whenever a terminal is available, without opening the command assistant or IDE.

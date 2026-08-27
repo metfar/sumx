@@ -809,6 +809,62 @@ Y=7;
             app.interpreter.runtime.db.close();
 
 
+class ConfigurationThemeTests(unittest.TestCase):
+    def test_console_saves_and_reloads_theme(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "sumx.json";
+            app = SumXConsoleApp(config_path=config);
+            try:
+                self.assertEqual(app.app.theme.name, "XBASE");
+                self.assertTrue(app.set_theme("Ralesk's MC"));
+                self.assertTrue(app.save_configuration());
+                self.assertTrue(config.exists());
+            finally:
+                app.interpreter.runtime.db.close();
+            reloaded = SumXConsoleApp(config_path=config);
+            try:
+                self.assertEqual(reloaded.app.theme.name, "Ralesk's MC");
+            finally:
+                reloaded.interpreter.runtime.db.close();
+
+    def test_editor_saves_display_options_with_theme(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "demo.prg";
+            config = Path(directory) / "sumx.json";
+            source.write_text('PRINT "hello"\n', encoding="utf-8");
+            app = SumXEditorApp(source, config_path=config);
+            try:
+                app.set_theme("DOS");
+                app.editor.show_spaces = True;
+                app.editor.show_tabs = True;
+                app.editor.show_line_endings = True;
+                app.editor.show_control_chars = True;
+                self.assertTrue(app.save_configuration());
+            finally:
+                app.interpreter.runtime.db.close();
+            reloaded = SumXEditorApp(source, config_path=config);
+            try:
+                self.assertEqual(reloaded.app.theme.name, "DOS");
+                self.assertTrue(reloaded.editor.show_spaces);
+                self.assertTrue(reloaded.editor.show_tabs);
+                self.assertTrue(reloaded.editor.show_line_endings);
+                self.assertTrue(reloaded.editor.show_control_chars);
+            finally:
+                reloaded.interpreter.runtime.db.close();
+
+    def test_program_runtime_uses_saved_theme_without_assistant(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "sumx.json";
+            config.write_text("{\"theme\": \"Ralesk's MC\"}\n", encoding="utf-8");
+            app = SumXProgramApp(config_path=config);
+            try:
+                self.assertEqual(app.app.theme.name, "Ralesk's MC");
+                self.assertIs(app.app.root, app.command);
+                self.assertFalse(app.command.show_prompt);
+            finally:
+                app.interpreter.runtime.db.close();
+
+
 class FileTests(unittest.TestCase):
     def test_run_file_continuation(self):
         with tempfile.TemporaryDirectory() as folder:

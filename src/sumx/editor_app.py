@@ -34,15 +34,22 @@ from .helpdb import find_topic;
 
 class SumXEditorApp(SumXConsoleApp):
     """Keyboard-first educational source editor for .PRG files."""
-    def __init__(self, path, interpreter=None, database=":memory:", theme="XBASE"):
+    def __init__(self, path, interpreter=None, database=":memory:", theme=None, config_path=None, config=None):
         self.path = Path(path).expanduser().resolve();
         if not self.path.exists():
             self.document = TextDocument.empty(self.path);
         else:
             self.document = TextDocument.load(self.path);
         source = self.document.text;
-        super().__init__(interpreter=interpreter, database=database, theme=theme);
+        super().__init__(interpreter=interpreter, database=database, theme=theme, config_path=config_path, config=config);
+        editor_config = self.config.get("editor", {}) if isinstance(self.config.get("editor"), dict) else {};
         self.editor = TextEditor(source, line_numbers=True, on_change=self._editor_changed, on_cursor=self._editor_changed);
+        self.editor.configure_visibility(
+            spaces=bool(editor_config.get("show_spaces", False)),
+            tabs=bool(editor_config.get("show_tabs", False)),
+            line_endings=bool(editor_config.get("show_line_endings", False)),
+            controls=bool(editor_config.get("show_control_chars", False)),
+        );
         self.command = CommandWindow(prompt=". ", on_submit=self._submit);
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);
         self.status = StatusBar("");
@@ -126,15 +133,20 @@ class SumXEditorApp(SumXConsoleApp):
                 MenuItem("Reset", enabled=False, shortcut="Ctrl+F2"),
             ]),
             Menu("Options", [
+                MenuItem("Theme", submenu=self._theme_menu()),
+                Separator(),
                 MenuItem("Show spaces", self.toggle_spaces, checked=lambda: self.editor.show_spaces),
                 MenuItem("Show tabs", self.toggle_tabs, checked=lambda: self.editor.show_tabs),
                 MenuItem("Show line endings", self.toggle_eols, checked=lambda: self.editor.show_line_endings),
                 MenuItem("Show control characters", self.toggle_controls, checked=lambda: self.editor.show_control_chars),
+                Separator(),
+                MenuItem("Save configuration", self.save_configuration),
             ]),
             Menu("Help", [
                 MenuItem("Context Help", self._editor_help, "F1"),
                 MenuItem("sumX Help", self._help),
                 MenuItem("Editor Keys", self._editor_keys_help),
+                MenuItem("Configuration", self._configuration_help),
             ]),
         ];
 
@@ -319,7 +331,11 @@ class SumXEditorApp(SumXConsoleApp):
 - **Ctrl+Left / Ctrl+Right** move by words; add Shift to extend selection.
 - **Ctrl+F**, **F3**, **Shift+F3** search; **Ctrl+G** goes to a line.
 
-The File/Edit/Search/Run/Debug/Options/Help menus remain visible at the top. Debug commands are placeholders until the debugger runtime is implemented.
+The File/Edit/Search/Run/Debug/Options/Help menus remain visible at the top.
+
+Options also provides **Theme** and **Save configuration**. Saved editor visibility options and the chosen theme are restored on the next run.
+
+Debug commands are placeholders until the debugger runtime is implemented.
 """;
         self._show_help(text, title="sumX Editor Help");
         return True;
