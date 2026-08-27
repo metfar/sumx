@@ -1,3 +1,20 @@
+Metadata-Version: 2.4
+Name: sumx
+Version: 0.1.4
+Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
+Author-email: William Martinez Bas <metfar@gmail.com>
+License: GPL-2.0-or-later
+Classifier: Development Status :: 3 - Alpha
+Classifier: License :: OSI Approved :: GNU General Public License v2 or later (GPLv2+)
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Database :: Database Engines/Servers
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: sumtui>=0.5.2
+Requires-Dist: rich>=13.0
+Dynamic: license-file
+
 # sumX 0.1.4
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
@@ -759,4 +776,4 @@ sumx --run examples/interactive_runtime.prg
 
 The Python example is intentionally readable side-by-side material; `sumx --compile` remains the authoritative generated form. The Bash examples show how source compatibility and generated Python fit into ordinary shell workflows.
 
-<p align=center><b>- oOo -</b></p>
+<p align=center><b>- oOo -<b></p>
