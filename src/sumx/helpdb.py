@@ -120,7 +120,7 @@ _TOPICS = [
         "BROWSE", "Database", "Opens an interactive table browser for the active table or displays a browsable expression/cursor.",
         ("BROWSE", "BROW", "BROWSE expression [LIMIT n]"),
         'CREATE TABLE demo (id AUTONUM, name VARCHAR(30))\nUSE demo\nAPPEND name="Ana"\nAPPEND name="Luis"\nBROWSE',
-        ("In interactive --run mode the browser is a sumTUI modal and program execution resumes after it closes.", "Views and expression/cursor results may be read-only."),
+        ("In interactive --run mode the browser is a sumTUI modal and program execution resumes after it closes.", "Table-backed BROWSE includes New* to append a record directly and then refresh the browser.", "Views and expression/cursor results may be read-only."),
         ("APPEND",),
     ),
     HelpTopic(

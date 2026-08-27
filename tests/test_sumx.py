@@ -1030,3 +1030,65 @@ class CompatibilitySyntaxTests(InterpreterTestCase):
         generated = compile_source('A=5\nIF A==5 THEN\nPRINT "LISTO"\nELSE\nPRINT "NO"\nENDIF\n');
         self.assertIn("if program.condition('A==5'", generated);
         self.assertIn('program.statement(\'PRINT "LISTO"\'', generated);
+
+class CompiledThemeTests(unittest.TestCase):
+    def test_custom_theme_is_embedded_as_python_data(self):
+        from sumtui import THEMES, make_theme;
+        custom = make_theme("Ralesk's MC").copy(name="Teaching MC", style_overrides=(("syntax_keyword", "bold #abcdef"),));
+        THEMES[custom.name] = custom;
+        try:
+            generated = compile_source('PRINT "Hello";\n', source_name="hello.prg", theme=custom.name);
+            self.assertIn("# Compile-time theme: Teaching MC", generated);
+            self.assertIn("PROGRAM_THEME_NAME = None", generated);
+            self.assertIn("Teaching MC", generated);
+            self.assertIn("#abcdef", generated);
+        finally:
+            THEMES.pop(custom.name, None);
+
+    def test_builtin_theme_compiles_by_name_without_user_config_dependency(self):
+        generated = compile_source('PRINT "Hello";\n', source_name="hello.prg", theme="DOS");
+        self.assertIn("PROGRAM_THEME_NAME = 'DOS'", generated);
+        self.assertIn("PROGRAM_THEME_DATA = None", generated);
+
+    def test_browse_button_bar_contains_new_record_action(self):
+        app = SumXConsoleApp();
+        try:
+            app.interpreter.execute("CREATE TABLE t (id AUTONUM, name VARCHAR(20))");
+            app.interpreter.execute("USE t");
+            request = app.interpreter.execute("BROWSE");
+            app._show_browse(request);
+            content = app.app.root.child;
+            buttons = content.items[1].widget;
+            labels = [item.widget.label for item in buttons.items];
+            self.assertEqual(labels, ["First", "Prev", "Next", "Last", "Search", "New*", "Edit", "Exit"]);
+            app.app.root.cancel();
+        finally:
+            app.interpreter.runtime.db.close();
+
+class BrowseNewRecordTests(unittest.TestCase):
+    def test_browse_new_appends_refreshes_and_selects_new_record(self):
+        app = SumXConsoleApp();
+        try:
+            app.interpreter.execute("CREATE TABLE t (id AUTONUM, name VARCHAR(20))");
+            app.interpreter.execute("USE t");
+            request = app.interpreter.execute("BROWSE");
+            app._show_browse(request);
+            browse_dialog = app.app.root;
+            content = browse_dialog.child;
+            browser = content.items[0].widget;
+            buttons = content.items[1].widget;
+            new_button = next(item.widget for item in buttons.items if item.widget.label == "New*");
+            self.assertTrue(new_button.press());
+            self.assertEqual(app.app.modal_depth, 2);
+            form = app.app.root.child.items[0].widget;
+            name = form.control("name");
+            app.app.focus.set(name);
+            name.set("Ana");
+            self.assertTrue(app.app.dispatch(KeyEvent(Key.END, ctrl=True)));
+            self.assertEqual(app.app.modal_depth, 1);
+            self.assertEqual(app.interpreter.runtime.db.reccount_for("t"), 1);
+            self.assertEqual(app.interpreter.runtime.db.record_at(1, table="t")["name"], "Ana");
+            self.assertEqual(browser.selected, 0);
+            app.app.root.cancel();
+        finally:
+            app.interpreter.runtime.db.close();

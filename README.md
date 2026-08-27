@@ -802,4 +802,20 @@ sumx --run examples/interactive_runtime.prg
 
 The Python example is intentionally readable side-by-side material; `sumx --compile` remains the authoritative generated form. The Bash examples show how source compatibility and generated Python fit into ordinary shell workflows.
 
+## BROWSE New* and compile-time themes
+
+A table-backed `BROWSE` now exposes `First | Prev | Next | Last | Search | New* | Edit | Exit`. `New*` opens the same schema-derived append form used by interactive `APPEND`; after saving/closing, BROWSE refreshes and positions the work area on the appended record. Read-only cursors/views do not enable New*.
+
+Compilation freezes presentation deliberately. `sumx --compile` uses the **effective theme at compile time** (or the explicit `--theme` override) and generated Python does not read the executing user's saved sumX theme to decide its appearance.
+
+```bash
+sumx --theme DOS --compile examples/window.prg -o /tmp/window.py
+./tmp/window.py
+```
+
+For a built-in theme, generated Python stores the built-in theme name. For a user theme created with `sumtheme`, sumX embeds the complete effective theme dictionary directly in the generated Python, so that custom palette does not need to exist in `~/.config/sumtui/themes` on the machine/account where the generated program runs. The generated source keeps the settings visible as `PROGRAM_THEME_NAME` / `PROGRAM_THEME_DATA` for inspection.
+
+Python example: `examples/python/theme_embedding.py`. Bash example: `examples/bash/compile_theme.sh`.
+
+
 <p align=center><b>- oOo -</b></p>

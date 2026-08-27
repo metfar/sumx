@@ -174,7 +174,7 @@ sumX can persist its interactive theme and editor display options.
 
 ## Theme
 
-Open **Options > Theme** and choose any theme supplied by sumTUI, including XBASE, Ralesk's MC, DBASE, FOXPRO, DOS, Dark and Light.
+Open **Options > Theme** and choose any built-in or user theme discovered by sumTUI. `sumtheme` can clone/edit themes under the sumTUI user-theme directory, and those themes appear here on the next start.
 
 Use **Options > Save configuration** to make the current selection persistent.
 
@@ -188,6 +188,8 @@ sumx --theme DOS --run programa.prg
 ```
 
 Use `sumx --list-themes` to list installed themes.
+
+When compiling, sumX freezes the effective theme. Built-in themes are stored by name; custom/user themes are embedded as complete theme data in the generated Python so the target user does not need that theme installed.
 """;
         self._show_help(text, title="sumX Configuration");
         return True;
@@ -903,6 +905,19 @@ Use `sumx --list-themes` to list installed themes.
             );
             return True;
 
+        def new_record(*_args):
+            if result.readonly or not result.table:
+                return False;
+            self._show_record_form(
+                result.table,
+                self.interpreter.runtime.db.columns(result.table),
+                "New*: {}".format(result.table),
+                after_close=refresh_browser,
+                record_number=None,
+                append=True,
+            );
+            return True;
+
         browser = BrowseForm(columns, prepared, on_change=changed, on_activate=edit_current);
         if result.table and self.interpreter.runtime.db.current_area.table == result.table and result.rows:
             browser.select(max(0, min(len(result.rows) - 1, self.interpreter.runtime.db.recno() - 1)));
@@ -922,10 +937,11 @@ Use `sumx --list-themes` to list installed themes.
             Button("Next", on_press=browser.next),
             Button("Last", on_press=browser.last),
             Button("Search", on_press=search),
+            Button("New*", on_press=new_record, enabled=not result.readonly and bool(result.table)),
             Button("Edit", on_press=edit_current, enabled=not result.readonly and bool(result.table)),
             Button("Exit", on_press=close),
         );
-        hints = StatusBar("Enter Edit  Arrows/PgUp/PgDn Browse  F11 Max/Restore  Esc Exit");
+        hints = StatusBar("Enter Edit  New* Append  Arrows/PgUp/PgDn Browse  F11 Max/Restore  Esc Exit");
         content = VBox(browser, buttons, hints, sizes=[None, 1, 1]);
         widths = [];
         for index, column in enumerate(result.columns):

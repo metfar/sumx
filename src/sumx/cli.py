@@ -203,6 +203,8 @@ def main(argv=None):
         return 0;
     if args.self_test:
         return self_test();
+    config = load_config(args.config);
+    selected_theme = resolve_theme(args.theme, config);
     if args.output and not args.compile_program:
         parser.error("--output requires --compile");
     if args.file and (args.run or args.compile_program or args.check or args.command is not None):
@@ -214,6 +216,7 @@ def main(argv=None):
                 output=args.output,
                 line_continuation=args.line_continuation.upper(),
                 ampersand_comment=args.ampersand_comment,
+                theme=selected_theme,
             );
             if args.output == "-":
                 sys.stdout.write(generated);
@@ -238,8 +241,6 @@ def main(argv=None):
         except Exception as exc:
             print("Check error: {}".format(exc), file=sys.stderr);
             return 1;
-    config = load_config(args.config);
-    selected_theme = resolve_theme(args.theme, config);
     interpreter = Interpreter(database=args.database);
     interpreter.runtime.set_debug_level(args.debug_level);
     interpreter.runtime.set_line_continuation(args.line_continuation.upper());

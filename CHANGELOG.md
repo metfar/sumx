@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.6
+
+- `BROWSE` now includes a `New*` action beside Search/Edit so a table-backed browser can append a new record directly, return to the browser, refresh, and keep the work-area position on the new record.
+- `sumx --compile` now freezes the effective theme at compile time instead of consulting the executing user's sumX theme configuration later.
+- Built-in themes are stored compactly by built-in name in generated Python. User/custom themes are serialized as full effective theme data directly into the generated `.py`, so the compiled program does not need that custom theme installed on the target account.
+- The compile-time `--theme NAME` override determines the frozen theme; when omitted, the saved/effective sumX theme at compile time is used.
+- Generated input dialogs receive the frozen theme through the runtime helper.
+- Added theme-embedding and BROWSE New* regression coverage plus Python/Bash examples for inspecting compile-time theme embedding.
+- Requires sumTUI 0.5.11 or newer.
+
 ## 0.1.5
 
 - Added persistent sumX application configuration at `~/.config/sumx/config.json`, respecting `$XDG_CONFIG_HOME`; `--config FILE` can select an alternate file.

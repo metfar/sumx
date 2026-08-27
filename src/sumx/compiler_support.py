@@ -26,7 +26,7 @@ from pathlib import Path;
 
 from rich.console import Console;
 
-from sumtui import InputSpec, read_input;
+from sumtui import InputSpec, make_theme, read_input, theme_from_dict;
 
 from .console import print_result;
 from .interpreter import Interpreter;
@@ -35,9 +35,10 @@ from .results import AppendRequest, BatchResult, FormRequest, InputRequest, Quit
 
 class GeneratedProgram:
     """Runtime helper used by readable Python emitted by ``sumx --compile``."""
-    def __init__(self, source_name="<compiled>", database=":memory:"):
+    def __init__(self, source_name="<compiled>", database=":memory:", theme_name=None, theme_data=None):
         self.source_name = str(source_name);
         self.interpreter = Interpreter(database=database);
+        self.theme = theme_from_dict(theme_data) if theme_data else make_theme(theme_name or "XBASE");
         if self.source_name and not self.source_name.startswith("<"):
             try:
                 self.interpreter.source_stack.append(Path(self.source_name).expanduser().resolve());
@@ -85,6 +86,7 @@ class GeneratedProgram:
                     timeout=item.timeout_seconds,
                     dialog=item.dialog,
                     title="{} -> {}".format(item.command, item.target),
+                    theme=self.theme,
                 );
                 response = read_input(spec);
                 if response.status == 1:
