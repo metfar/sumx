@@ -1,4 +1,4 @@
-# sumX 0.1.5
+# sumX 0.1.6
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -7,8 +7,8 @@ sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The cu
 Install sumTUI first, then sumX:
 
 ```bash
-pip install ./sumtui-0.5.10-py3-none-any.whl
-pip install ./sumx-0.1.5-py3-none-any.whl
+pip install ./sumtui-0.5.11-py3-none-any.whl
+pip install ./sumx-0.1.6-py3-none-any.whl
 ```
 
 Run the sumTUI command window:
@@ -111,7 +111,7 @@ File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operat
 
 Both the ordinary sumX command environment and the source editor have **Options > Theme** and **Options > Save configuration**. The program-only `sumx --run` runtime has no assistant menu, but it still uses the saved theme for its dialogs, GET/READ fields, BROWSE and APPEND windows.
 
-Available themes come from sumTUI. With sumTUI 0.5.10 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
+Available themes come from sumTUI. With sumTUI 0.5.11 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
 
 The default configuration path is:
 
@@ -612,7 +612,7 @@ BROWSE;       # read-only because the source is a view
 
 In the sumTUI command environment, `HELP` and F1 open a scrollable explorer dialog (`F11` maximizes/restores). The command window itself supports `PageUp` and `PageDown` for sumX output scrollback. `Shift+PageUp` / `Shift+PageDown` are aliases when the terminal forwards them; many Linux terminal emulators consume those shortcuts themselves.
 
-Table-backed `BROWSE` is editable and shows `First | Prev | Next | Last | Search | Edit | Exit`. `APPEND` and record edit dialogs show `First | Prev | Next | Last | Search | Ok | Cancel | Exit`; `Ctrl+End` saves and exits. SQL cursors and SQLite views remain read-only.
+Table-backed `BROWSE` is editable and shows `First | Prev | Next | Last | Search | New* | Edit | Exit`. `APPEND` and record edit dialogs show `First | Prev | Next | Last | Search | Ok | Cancel | Exit`; `Ctrl+End` saves and exits. SQL cursors and SQLite views remain read-only.
 
 ## Generic BROWSE
 
