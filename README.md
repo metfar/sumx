@@ -1,4 +1,4 @@
-# sumX 0.1.6
+# sumX 0.1.8
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -8,7 +8,7 @@ Install sumTUI first, then sumX:
 
 ```bash
 pip install ./sumtui-0.5.11-py3-none-any.whl
-pip install ./sumx-0.1.6-py3-none-any.whl
+pip install ./sumx-0.1.8-py3-none-any.whl
 ```
 
 Run the sumTUI command window:

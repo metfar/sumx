@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.8
+
+- Documentation/example consistency pass: README version/install examples now match 0.1.8, and `examples/bash/open_editor.sh` documents the current IDE convention (`F5` Run/Stop, `F6` Next Window, `Ctrl+F6` Compile).
+- Updated the declared sumTUI dependency to `sumtui>=0.5.19`.
+- No language/runtime behavior changed from 0.1.7; regression suite remains 92 tests.
+
 ## 0.1.7
 
 - Unified IDE function keys with the rest of the Sum editors: **F5 = Run/Stop**, **F6 = switch Editor / Output-Command window**.
