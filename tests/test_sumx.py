@@ -56,6 +56,41 @@ class EditorMenuTests(unittest.TestCase):
             finally:
                 app.interpreter.runtime.db.close();
 
+    def test_editor_f5_run_stop_f6_window_and_ctrl_f6_compile(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "keys.prg";
+            path.write_text('PRINT "hello"\n', encoding="utf-8");
+            app = SumXEditorApp(path);
+            try:
+                self.assertIn("f5", app.app.bindings);
+                self.assertIn("f6", app.app.bindings);
+                self.assertIn("ctrl+f6", app.app.bindings);
+                app.app.focus.set(app.editor);
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
+                self.assertIs(app.app.focus.current, app.command);
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
+                self.assertIs(app.app.focus.current, app.editor);
+                app._program_active = True;
+                self.assertTrue(app.toggle_run());
+                self.assertFalse(app._program_active);
+            finally:
+                app.interpreter.runtime.db.close();
+
+    def test_editor_run_is_cooperative_so_f5_can_stop_between_statement_batches(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "longrun.prg";
+            source = "\n".join('PRINT "line {}"'.format(index) for index in range(40));
+            path.write_text(source + "\n", encoding="utf-8");
+            app = SumXEditorApp(path);
+            try:
+                self.assertTrue(app.run_buffer());
+                self.assertTrue(app.program_active);
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.F5)));
+                self.assertFalse(app.program_active);
+            finally:
+                app.interpreter.runtime.db.close();
+
+
 
 class ProgramRuntimeTests(unittest.TestCase):
     def test_program_runtime_has_no_assistant_shell(self):

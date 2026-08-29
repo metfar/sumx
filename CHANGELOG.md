@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7
+
+- Unified IDE function keys with the rest of the Sum editors: **F5 = Run/Stop**, **F6 = switch Editor / Output-Command window**.
+- IDE execution is cooperative in bounded statement batches, so the sumTUI event loop remains responsive and F5 can stop a running program instead of waiting for the whole buffer to finish.
+- Moved Compile to Python from F6 to **Ctrl+F6**; the Run menu and function bar reflect the new assignments.
+- SumX editor action rows no longer force one-row button containers, allowing the multi-row Button geometry provided by sumTUI 0.5.18 to propagate through editor dialogs.
+- Updated dependency to `sumtui>=0.5.18`.
+- Regression suite: 92 tests.
+
 ## 0.1.6
 
 - `BROWSE` now includes a `New*` action beside Search/Edit so a table-backed browser can append a new record directly, return to the browser, refresh, and keep the work-area position on the new record.

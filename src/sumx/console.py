@@ -78,6 +78,9 @@ class SumXConsoleApp:
         self._program_name = None;
         self._program_active = False;
         self._program_quit = False;
+        self._program_blocked = False;
+        self._program_cooperative = False;
+        self._program_idle_budget = 8;
         self._window_widgets = {};
         self._active_window_name = None;
         self.command.write("sumX {} - xBase-inspired interpreter".format(__version__));
@@ -288,6 +291,7 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         self._program_name = str(name);
         self._program_active = True;
         self._program_quit = False;
+        self._program_blocked = False;
         self._continue_program();
         return self;
 
@@ -304,8 +308,13 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         self._program_results = [];
         self._program_name = None;
         self._program_active = False;
+        self._program_blocked = False;
         self._update_status();
         return None;
+
+    def _resume_program(self):
+        self._program_blocked = False;
+        return self._continue_program();
 
     def _handle_program_result(self, result):
         if result is None:
@@ -314,25 +323,32 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             self._program_results = list(result.results) + self._program_results;
             return False;
         if isinstance(result, HelpRequest):
-            self._show_help(result.text, title=result.title, after_close=self._continue_program);
+            self._program_blocked = True;
+            self._show_help(result.text, title=result.title, after_close=self._resume_program);
             return True;
         if isinstance(result, BrowseRequest):
-            self._show_browse(result, after_close=self._continue_program);
+            self._program_blocked = True;
+            self._show_browse(result, after_close=self._resume_program);
             return True;
         if isinstance(result, TableResult):
-            self._show_table(result, after_close=self._continue_program);
+            self._program_blocked = True;
+            self._show_table(result, after_close=self._resume_program);
             return True;
         if isinstance(result, AppendRequest):
-            self._show_record_form(result.table, result.columns, result.title, after_close=self._continue_program);
+            self._program_blocked = True;
+            self._show_record_form(result.table, result.columns, result.title, after_close=self._resume_program);
             return True;
         if isinstance(result, FormRequest):
-            self._show_record_form(result.table, result.columns, result.title, after_close=self._continue_program);
+            self._program_blocked = True;
+            self._show_record_form(result.table, result.columns, result.title, after_close=self._resume_program);
             return True;
         if isinstance(result, InputRequest):
-            self._show_input(result, after_done=self._continue_program);
+            self._program_blocked = True;
+            self._show_input(result, after_done=self._resume_program);
             return True;
         if isinstance(result, ReadRequest):
-            self._begin_read(result, after_done=self._continue_program);
+            self._program_blocked = True;
+            self._begin_read(result, after_done=self._resume_program);
             return True;
         if isinstance(result, QuitResult):
             self._program_quit = True;
@@ -345,8 +361,18 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
     def _continue_program(self):
         if not self._program_active:
             return None;
+        if self._program_blocked:
+            if self.app.modal_depth == 0 and not bool(getattr(self.command, "read_active", False)):
+                self._program_blocked = False;
+            else:
+                return None;
+        budget = self._program_idle_budget if self._program_cooperative else None;
+        steps = 0;
         try:
-            while self._program_active:
+            while self._program_active and not self._program_blocked:
+                if budget is not None and steps >= budget:
+                    return None;
+                steps += 1;
                 if self._program_results:
                     result = self._program_results.pop(0);
                 elif self._program_statements:

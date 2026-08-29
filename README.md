@@ -104,7 +104,7 @@ File  Edit  Search  Run  Debug  Options  Help
 
 **F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/H` opens the corresponding top-level menu.
 
-File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
+File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F5 toggles Run/Stop, F6 switches between the editor and Output/Command windows, and Ctrl+F6 compiles to Python.** IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
 
 
 ### Themes and persistent configuration
@@ -818,4 +818,4 @@ For a built-in theme, generated Python stores the built-in theme name. For a use
 Python example: `examples/python/theme_embedding.py`. Bash example: `examples/bash/compile_theme.sh`.
 
 
-<p align=center><b>- oOo -</b></p>
+<p align=center><b>- oOo -<b></p>

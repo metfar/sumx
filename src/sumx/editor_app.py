@@ -60,13 +60,14 @@ class SumXEditorApp(SumXConsoleApp):
         self.bar = FunctionBar([
             ("f1", "Help", self._editor_help),
             ("f2", "Save", self.save),
-            ("f5", "Run", self.run_buffer),
-            ("f6", "Compile", self.compile_buffer),
+            ("f5", "Run/Stop", self.toggle_run),
+            ("f6", "Window", self.switch_window),
             ("f9", "Menu", self.open_menu),
             ("f10", "Exit", self.app.stop),
         ]);
         self.bar.install(self.app);
         self.app.bind("ctrl+f9", self.run_buffer);
+        self.app.bind("ctrl+f6", self.compile_buffer);
         self.app.bind("alt+f9", self.check_buffer);
         self.app.bind("ctrl+n", self.new_file);
         self.app.bind("ctrl+o", self.open_file_dialog);
@@ -122,8 +123,8 @@ class SumXEditorApp(SumXConsoleApp):
             ]),
             Menu("Run", [
                 MenuItem("Check", self.check_buffer, "Alt+F9"),
-                MenuItem("Run", self.run_buffer, "Ctrl+F9"),
-                MenuItem("Compile to Python", self.compile_buffer, "F6"),
+                MenuItem("Run / Stop", self.toggle_run, "F5"),
+                MenuItem("Compile to Python", self.compile_buffer, "Ctrl+F6"),
             ]),
             Menu("Debug", [
                 MenuItem("Run to Cursor", enabled=False, shortcut="F4"),
@@ -211,7 +212,7 @@ class SumXEditorApp(SumXConsoleApp):
             self.editor_panel.title = self.path.name;
             close();
             self.save();
-        body = VBox(entry, HBox(Button("Save", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, 1]);
+        body = VBox(entry, HBox(Button("Save", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, None]);
         self.app.push_modal(Dialog(body, title="Save As", width=72, height=7, on_cancel=close));
         self.app.focus.set(entry);
         self.app.invalidate();
@@ -227,7 +228,7 @@ class SumXEditorApp(SumXConsoleApp):
             self.search_text = entry.value;
             close();
             return self.find_next();
-        body = VBox(entry, HBox(Button("Find", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, 1]);
+        body = VBox(entry, HBox(Button("Find", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, None]);
         self.app.push_modal(Dialog(body, title="Find", width=56, height=7, on_cancel=close));
         self.app.focus.set(entry);
         self.app.invalidate();
@@ -293,7 +294,7 @@ class SumXEditorApp(SumXConsoleApp):
             self.editor._apply_move(row, 0);
             self._update_editor_status();
             return True;
-        body = VBox(entry, HBox(Button("Go", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, 1]);
+        body = VBox(entry, HBox(Button("Go", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, None]);
         self.app.push_modal(Dialog(body, title="Go to Line", width=36, height=7, on_cancel=close));
         self.app.focus.set(entry);
         self.app.invalidate();
@@ -323,7 +324,7 @@ class SumXEditorApp(SumXConsoleApp):
         text = """# sumX editor keys
 
 - **F9** opens the top menu; **F10** exits.
-- **F1** contextual help; **F2** save; **F5** run; **F6** compile to Python.
+- **F1** contextual help; **F2** save; **F5** toggles run/stop; **F6** switches editor/output windows; **Ctrl+F6** compiles to Python.
 - **Ctrl+F9** runs the current buffer; **Alt+F9** checks it.
 - **Ctrl+Z / Ctrl+Y** undo/redo.
 - **Ctrl+C / Ctrl+X / Ctrl+V** copy/cut/paste.
@@ -381,12 +382,51 @@ Debug commands are placeholders until the debugger runtime is implemented.
         self.app.invalidate();
         return True;
 
+    def switch_window(self):
+        targets = [self.editor, self.command];
+        current = self.app.focus.current;
+        try:
+            index = targets.index(current);
+        except ValueError:
+            index = -1;
+        target = targets[(index + 1) % len(targets)];
+        self.app.focus.set(target);
+        self._update_editor_status("Window: {}".format("Editor" if target is self.editor else "Output / Command"));
+        self.app.invalidate();
+        return True;
+
+    def _program_idle(self):
+        if not self._program_active:
+            self.app.remove_idle(self._program_idle);
+            return False;
+        if self._program_blocked:
+            return False;
+        self._continue_program();
+        return True;
+
+    def stop_buffer(self):
+        if not self._program_active:
+            self._update_editor_status("No program is running");
+            return True;
+        self._program_active = False;
+        self._finish_program();
+        self._update_editor_status("Run stopped");
+        self.app.invalidate();
+        return True;
+
+    def toggle_run(self):
+        return self.stop_buffer() if self._program_active else self.run_buffer();
+
     def run_buffer(self):
         if self._program_active:
             self.command.write_error("A program is already running");
             return False;
         self.command.write("--- Run {} ---".format(self.path.name), style="command_info");
+        self._program_cooperative = True;
+        self.app.add_idle(self._program_idle);
         self.run_program(self.editor.text, name=str(self.path));
+        if self._program_active:
+            self._update_editor_status("Running. F5 stops; F6 switches editor/output window.");
         self.app.invalidate();
         return True;
 
@@ -432,6 +472,8 @@ Debug commands are placeholders until the debugger runtime is implemented.
         return result;
 
     def _finish_program(self):
+        self.app.remove_idle(self._program_idle);
+        self._program_cooperative = False;
         result = super()._finish_program();
         if hasattr(self, "editor"):
             self.app.focus.set(self.editor);
