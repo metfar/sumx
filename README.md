@@ -1,4 +1,4 @@
-# sumX 0.1.8
+# sumX 0.1.9
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -7,8 +7,8 @@ sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The cu
 Install sumTUI first, then sumX:
 
 ```bash
-pip install ./sumtui-0.5.11-py3-none-any.whl
-pip install ./sumx-0.1.8-py3-none-any.whl
+pip install ./sumtui-0.5.20.tar.gz
+pip install ./sumx-0.1.9.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -99,19 +99,21 @@ sumx examples/hello.prg
 The editor is keyboard-first but now has the classic always-visible IDE menu bar:
 
 ```text
-File  Edit  Search  Run  Debug  Options  Help
+File  Edit  Search  Run  Debug  Options  Window  Help
 ```
 
-**F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/H` opens the corresponding top-level menu.
+**F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/W/H` opens the corresponding top-level menu.
 
-File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F5 toggles Run/Stop, F6 switches between the editor and Output/Command windows, and Ctrl+F6 compiles to Python.** IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
+File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F5 toggles Run/Stop, F6 cycles Code → Output → Command, F11 maximizes/restores the active window, Ctrl+F4 closes it, and Ctrl+F6 compiles to Python.** IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
+
+The IDE now uses the common sumTUI overlapping workspace. **Code**, **Output**, and **Command** are independent movable windows. Drag a window by its title border, use `Alt+Arrow` to move it from the keyboard, choose **Window** to activate/close/reopen a default window, or use F11 to temporarily give one window the full workspace. Program output is no longer mixed into the direct xBase Command history.
 
 
 ### Themes and persistent configuration
 
 Both the ordinary sumX command environment and the source editor have **Options > Theme** and **Options > Save configuration**. The program-only `sumx --run` runtime has no assistant menu, but it still uses the saved theme for its dialogs, GET/READ fields, BROWSE and APPEND windows.
 
-Available themes come from sumTUI. With sumTUI 0.5.11 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
+Available themes come from sumTUI. With sumTUI 0.5.20 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
 
 The default configuration path is:
 

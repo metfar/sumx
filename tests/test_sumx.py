@@ -45,7 +45,7 @@ class EditorMenuTests(unittest.TestCase):
             path.write_text('PRINT "hello"\n', encoding="utf-8");
             app = SumXEditorApp(path);
             try:
-                self.assertEqual([menu.title for menu in app.menu.menus], ["File", "Edit", "Search", "Run", "Debug", "Options", "Help"]);
+                self.assertEqual([menu.title for menu in app.menu.menus], ["File", "Edit", "Search", "Run", "Debug", "Options", "Window", "Help"]);
                 self.assertIn("f9", app.app.bindings);
                 self.assertIn("f10", app.app.bindings);
                 self.assertTrue(app.open_menu(0));
@@ -66,6 +66,8 @@ class EditorMenuTests(unittest.TestCase):
                 self.assertIn("f6", app.app.bindings);
                 self.assertIn("ctrl+f6", app.app.bindings);
                 app.app.focus.set(app.editor);
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
+                self.assertIs(app.app.focus.current, app.output_view);
                 self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
                 self.assertIs(app.app.focus.current, app.command);
                 self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
@@ -1127,3 +1129,39 @@ class BrowseNewRecordTests(unittest.TestCase):
             app.app.root.cancel();
         finally:
             app.interpreter.runtime.db.close();
+
+
+class WorkspaceIDEtests(unittest.TestCase):
+    def test_editor_workspace_has_code_output_command_windows(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "windows.prg";
+            path.write_text('PRINT "hello"\n', encoding="utf-8");
+            app = SumXEditorApp(path);
+            try:
+                self.assertEqual([window.name for window in app.workspace.windows], ["output", "command", "code"]);
+                self.assertIs(app.workspace.active_window, app.code_window);
+                self.assertTrue(app.close_current_window(app.command_window));
+                self.assertFalse(app.command_window.visible);
+                self.assertTrue(app.activate_window(app.command_window));
+                self.assertTrue(app.command_window.visible);
+                self.assertTrue(app.toggle_window_maximize(app.output_window));
+                self.assertTrue(app.output_window.maximized);
+                self.assertTrue(app.toggle_window_maximize(app.output_window));
+                self.assertFalse(app.output_window.maximized);
+            finally:
+                pass;
+
+    def test_program_output_goes_to_output_window_not_command_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "run.prg";
+            path.write_text('PRINT "hello"\n', encoding="utf-8");
+            app = SumXEditorApp(path);
+            try:
+                app.run_buffer();
+                for _ in range(20):
+                    if not app._program_active:
+                        break;
+                    app._program_idle();
+                self.assertIn("hello", app.output_view.text);
+            finally:
+                pass;

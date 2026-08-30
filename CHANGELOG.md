@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9
+
+- Migrated the source IDE to sumTUI 0.5.20 `Workspace` windows. Code, Output, and the stateful xBase Command console are now separate movable/overlapping windows rather than a fixed editor plus combined output/command area.
+- Added a dynamic **Window** menu to activate, close, and reopen the persistent default windows. F6 cycles Code → Output → Command, F11 maximizes/restores the active window, and Ctrl+F4 closes it; Ctrl+F6 remains Compile to Python.
+- Program output is routed to the Output window while direct commands remain in their own persistent Command history.
+- Updated editor documentation and Bash examples for the shared Sum IDE window convention.
+- Requires sumTUI 0.5.20 or newer. Regression suite: 94 tests.
+
 ## 0.1.8
 
 - Documentation/example consistency pass: README version/install examples now match 0.1.8, and `examples/bash/open_editor.sh` documents the current IDE convention (`F5` Run/Stop, `F6` Next Window, `Ctrl+F6` Compile).
