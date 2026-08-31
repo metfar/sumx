@@ -68,7 +68,7 @@ class SumXConsoleApp:
         self.config_path = Path(config_path).expanduser() if config_path is not None else default_config_path();
         self.config = dict(config) if isinstance(config, dict) else load_config(self.config_path);
         selected_theme = resolve_theme(theme, self.config);
-        self.app = Application("sumX", theme=selected_theme);
+        self.app = Application("sumX", theme=selected_theme, capture_control_keys=True, mouse=True);
         self.command = CommandWindow(prompt=". ", on_submit=self._submit);
         self.status = StatusBar(self.interpreter.runtime.db.status());
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);

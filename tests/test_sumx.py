@@ -1165,3 +1165,21 @@ class WorkspaceIDEtests(unittest.TestCase):
                 self.assertIn("hello", app.output_view.text);
             finally:
                 pass;
+
+class EditorShortcutMapTests(unittest.TestCase):
+    def test_f2_program_map_ctrl_q_and_scrolled_output(self):
+        from sumtui import TextViewPane, CommandWindowPane;
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / 'map.prg';
+            path.write_text('PROCEDURE Hello\nRETURN\nFUNCTION Add\nRETURN 1\n', encoding='utf-8');
+            app = SumXEditorApp(path);
+            names = {item.name for item in app.symbol_map()};
+            self.assertIn('Hello', names);
+            self.assertIn('Add', names);
+            self.assertIsInstance(app.output_window.child, TextViewPane);
+            self.assertIsInstance(app.command_window.child, CommandWindowPane);
+            self.assertIn('ctrl+q', app.app.bindings);
+            self.assertIn('ctrl+x', app.app.bindings);
+            self.assertIn('ctrl+r', app.app.bindings);
+            self.assertIn('ctrl+tab', app.app.bindings);
+            self.assertIn('alt+enter', app.app.bindings);

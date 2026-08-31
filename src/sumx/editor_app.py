@@ -24,8 +24,9 @@
 #warnings.filterwarnings("ignore", category=UserWarning);
 from pathlib import Path;
 
-from sumtui import Button, CommandWindow, Dialog, FileDialog, FunctionBar, HBox, Menu, MenuBar, MenuDesktop, MenuItem, Separator, StatusBar, TextEditor, TextInput, TextView, VBox, Workspace, WorkspaceWindow;
+from sumtui import Button, CommandWindow, CommandWindowPane, Dialog, FileDialog, FunctionBar, HBox, Label, ListView, Menu, MenuBar, MenuDesktop, MenuItem, Separator, StatusBar, TextEditor, TextInput, TextView, TextViewPane, VBox, Workspace, WorkspaceWindow;
 from sumtui.document import TextDocument;
+from sumtui.symbols import build_symbol_map;
 
 from .compiler import check_source, compile_source;
 from .console import SumXConsoleApp;
@@ -60,11 +61,11 @@ class SumXEditorApp(SumXConsoleApp):
         self.menu = MenuBar(self._editor_menus(), on_close=self._menu_closed);
         self.bar = FunctionBar([
             ("f1", "Help", self._editor_help),
-            ("f2", "Save", self.save),
+            ("f2", "Symbols", self.symbol_map_dialog),
             ("f5", "Run/Stop", self.toggle_run),
             ("f6", "Window", self.switch_window),
             ("f9", "Menu", self.open_menu),
-            ("f10", "Exit", self.app.stop),
+            ("f10", "Exit", self.quit),
         ]);
         self.bar.install(self.app);
         self.app.bind("ctrl+f9", self.run_buffer);
@@ -73,16 +74,27 @@ class SumXEditorApp(SumXConsoleApp):
         self.app.bind("ctrl+n", self.new_file);
         self.app.bind("ctrl+o", self.open_file_dialog);
         self.app.bind("ctrl+s", self.save);
-        self.app.bind("alt+x", self.app.stop);
+        self.app.bind("ctrl+q", self.quit);
+        self.app.bind("ctrl+x", self.editor.cut);
+        self.app.bind("shift+delete", self.editor.cut);
         self.app.bind("ctrl+f", self.find_dialog);
+        self.app.bind("f2", self.symbol_map_dialog);
+        self.app.bind("alt+p", self.symbol_map_dialog);
         self.app.bind("f3", self.find_next);
         self.app.bind("shift+f3", self.find_previous);
         self.app.bind("ctrl+g", self.goto_line_dialog);
+        self.app.bind("f5", self.toggle_run);
+        self.app.bind("ctrl+r", self.toggle_run);
+        self.app.bind("f6", self.switch_window);
+        self.app.bind("ctrl+tab", self.switch_window);
         for key, index in (("alt+f", 0), ("alt+e", 1), ("alt+s", 2), ("alt+r", 3), ("alt+d", 4), ("alt+o", 5), ("alt+w", 6), ("alt+h", 7)):
             self.app.bind(key, lambda index=index: self.open_menu(index));
         self.app.bind("f11", self.toggle_window_maximize);
+        self.app.bind("alt+enter", self.toggle_window_maximize);
         self.app.bind("ctrl+f4", self.close_current_window);
         self.output_view = TextView("Ready. F5 runs the current buffer.");
+        self.output_pane = TextViewPane(self.output_view);
+        self.command_pane = CommandWindowPane(self.command);
         available_width = max(40, int(self.app.width));
         available_height = max(12, int(self.app.height) - 3);
         code_width = max(30, min(available_width - 2, int(available_width * 0.78)));
@@ -92,8 +104,8 @@ class SumXEditorApp(SumXConsoleApp):
         command_width = max(28, min(available_width - 2, 44));
         command_height = max(7, min(available_height - 2, 11));
         self.code_window = WorkspaceWindow(self.editor, title="Code - {}".format(self.path.name), name="code", left=1, top=0, width=code_width, height=code_height, content_style="viewer");
-        self.output_window = WorkspaceWindow(self.output_view, title="Output", name="output", left=3, top=max(1, available_height - output_height), width=output_width, height=output_height, content_style="viewer");
-        self.command_window = WorkspaceWindow(self.command, title="Command", name="command", left=max(0, available_width - command_width - 1), top=max(1, available_height - command_height - 1), width=command_width, height=command_height, content_style="command");
+        self.output_window = WorkspaceWindow(self.output_pane, title="Output", name="output", left=3, top=max(1, available_height - output_height), width=output_width, height=output_height, content_style="viewer");
+        self.command_window = WorkspaceWindow(self.command_pane, title="Command", name="command", left=max(0, available_width - command_width - 1), top=max(1, available_height - command_height - 1), width=command_width, height=command_height, content_style="command");
         self.workspace = Workspace(self.output_window, self.command_window, self.code_window);
         body = VBox(self.workspace, self.status, self.bar, sizes=[None, 1, 1]);
         self.desktop = MenuDesktop(self.menu, body);
@@ -107,10 +119,10 @@ class SumXEditorApp(SumXConsoleApp):
             Menu("File", [
                 MenuItem("New", self.new_file, "Ctrl+N"),
                 MenuItem("Open...", self.open_file_dialog, "Ctrl+O"),
-                MenuItem("Save", self.save, "F2"),
+                MenuItem("Save", self.save, "Ctrl+S"),
                 MenuItem("Save As...", self.save_as_dialog),
                 Separator(),
-                MenuItem("Exit", self.app.stop, "F10"),
+                MenuItem("Exit", self.quit, "Ctrl+Q / F10"),
             ]),
             Menu("Edit", [
                 MenuItem("Undo", self.editor.undo, "Ctrl+Z"),
@@ -129,6 +141,7 @@ class SumXEditorApp(SumXConsoleApp):
                 MenuItem("Replace...", enabled=False),
                 Separator(),
                 MenuItem("Go to Line...", self.goto_line_dialog, "Ctrl+G"),
+                MenuItem("Functions / Classes / Main...", self.symbol_map_dialog, "F2 / Alt+P"),
             ]),
             Menu("Run", [
                 MenuItem("Check", self.check_buffer, "Alt+F9"),
@@ -191,14 +204,48 @@ class SumXEditorApp(SumXConsoleApp):
         elif self.document.path is not None:
             self.path = Path(self.document.path).expanduser().resolve();
         self.editor.set_text(self.document.text, modified=False);
-        self.editor_panel.title = self.path.name;
         self.app.focus.set(self.editor);
         self._update_editor_status("Loaded");
         return True;
 
-    def new_file(self):
+    def _close_modal(self):
+        if self.app.modal_depth:
+            self.app.pop_modal();
+        self.app.focus.set(self.editor);
+        self.app.invalidate();
+        return True;
+
+    def _confirm_unsaved(self, callback):
+        if not self.editor.modified:
+            return callback();
+        def cancel(*_args):
+            return self._close_modal();
+        def forget(*_args):
+            self._close_modal();
+            return callback();
+        def save_then(*_args):
+            self._close_modal();
+            return self.save(on_saved=callback);
+        body = VBox(
+            Label("The current file has unsaved changes."),
+            HBox(
+                Button("SAVE_AND_EXIT", on_press=save_then, default=True, height=3),
+                Button("FORGET_AND_EXIT", on_press=forget, height=3),
+                Button("CANCEL", on_press=cancel, height=3),
+                ratios=[1, 1, 1],
+            ),
+            sizes=[1, None],
+        );
+        self.app.push_modal(Dialog(body, title="Unsaved changes", width=76, height=9, on_cancel=cancel, shadow=True));
+        self.app.invalidate();
+        return True;
+
+    def _new_file_now(self):
         target = Path.cwd() / "untitled.prg";
         return self._set_document(TextDocument.empty(target), target);
+
+    def new_file(self):
+        return self._confirm_unsaved(self._new_file_now);
 
     def open_file_dialog(self):
         start = self.path.parent if self.path is not None else Path.cwd();
@@ -207,19 +254,22 @@ class SumXEditorApp(SumXConsoleApp):
             self.app.focus.set(self.editor);
             self.app.invalidate();
         def accepted(path):
-            try:
-                document = TextDocument.load(path);
-                close();
-                self._set_document(document, path);
-            except Exception as exc:
-                close();
-                self._update_editor_status("Open error: {}".format(exc));
+            selected = Path(path);
+            close();
+            def load_selected():
+                try:
+                    document = TextDocument.load(selected);
+                    return self._set_document(document, selected);
+                except Exception as exc:
+                    self._update_editor_status("Open error: {}".format(exc));
+                    return False;
+            return self._confirm_unsaved(load_selected);
         dialog = FileDialog(path=start, title="Open sumX source", on_accept=accepted, on_cancel=close, theme=self.app.theme);
         self.app.push_modal(dialog);
         self.app.invalidate();
         return True;
 
-    def save_as_dialog(self):
+    def save_as_dialog(self, on_saved=None):
         entry = TextInput(str(self.path));
         def close():
             self.app.pop_modal();
@@ -228,12 +278,38 @@ class SumXEditorApp(SumXConsoleApp):
         def accepted(*_args):
             self.path = Path(entry.value).expanduser().resolve();
             self.document.path = self.path;
-            self.editor_panel.title = self.path.name;
+            if hasattr(self, "code_window"):
+                self.code_window.title = "Code - {}".format(self.path.name);
             close();
-            self.save();
+            return self.save(on_saved=on_saved);
         body = VBox(entry, HBox(Button("Save", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, None]);
         self.app.push_modal(Dialog(body, title="Save As", width=72, height=7, on_cancel=close));
         self.app.focus.set(entry);
+        self.app.invalidate();
+        return True;
+
+    def symbol_map(self):
+        return build_symbol_map(self.editor.text, language="xbase", filename=self.path.name);
+
+    def symbol_map_dialog(self):
+        symbols = self.symbol_map();
+        listing = ListView([(item.label, item) for item in symbols], title="Functions / Classes / Main");
+        def close(*_args):
+            self._close_modal();
+            return True;
+        def activate(*_args):
+            item = listing.current_value;
+            if item is None:
+                return False;
+            close();
+            self.editor.goto_line(item.line, item.column);
+            self.workspace.show(self.code_window);
+            self._update_editor_status("{} {} - line {}".format(item.kind.upper(), item.name, item.line));
+            return True;
+        listing.on_activate = activate;
+        body = VBox(listing, HBox(Button("Go", on_press=activate, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[None, None]);
+        self.app.push_modal(Dialog(body, title="Program map", width=68, height=min(24, max(9, len(symbols) + 6)), on_cancel=close, shadow=True));
+        self.app.focus.set(listing);
         self.app.invalidate();
         return True;
 
@@ -343,13 +419,13 @@ class SumXEditorApp(SumXConsoleApp):
         text = """# sumX editor keys
 
 - **F9** opens the top menu; **F10** exits.
-- **F1** contextual help; **F2** save; **F5** toggles run/stop; **F6** cycles Code/Output/Command; **F11** maximizes/restores; **Ctrl+F4** closes the active window; **Ctrl+F6** compiles to Python.
+- **F1** contextual help; **F2** opens Program Map; **F5** toggles run/stop; **F6** cycles Code/Output/Command; **F11** maximizes/restores; **Ctrl+F4** closes the active window; **Ctrl+F6** compiles to Python.
 - **Ctrl+F9** runs the current buffer; **Alt+F9** checks it.
 - **Ctrl+Z / Ctrl+Y** undo/redo.
-- **Ctrl+C / Ctrl+X / Ctrl+V** copy/cut/paste.
+- **Ctrl+C / Ctrl+X / Ctrl+V** copy/cut/paste. **Ctrl+S** saves, **Ctrl+O** opens and **Ctrl+Q** quits.
 - **Shift+movement** extends selection.
 - **Ctrl+Left / Ctrl+Right** move by words; add Shift to extend selection.
-- **Ctrl+F**, **F3**, **Shift+F3** search; **Ctrl+G** goes to a line.
+- **Ctrl+F**, **F3**, **Shift+F3** search; **Ctrl+G** goes to a line. **Alt+P** is an F2 alternative on keyboards without function keys.
 
 The File/Edit/Search/Run/Debug/Options/Window/Help menus remain visible at the top. The Window menu can activate, close, or reopen the default Code/Output/Command windows.
 
@@ -382,13 +458,19 @@ Debug commands are placeholders until the debugger runtime is implemented.
         else:
             super()._update_status();
 
-    def save(self):
+    def save(self, on_saved=None):
         self.document.path = self.path;
         self.document.text = self.editor.text;
-        self.document.save(text=self.editor.text);
-        self.editor.mark_saved();
-        self._update_editor_status("Saved");
-        return True;
+        try:
+            self.document.save(text=self.editor.text);
+            self.editor.mark_saved();
+            self._update_editor_status("Saved");
+            if on_saved is not None:
+                return on_saved();
+            return True;
+        except Exception as exc:
+            self._update_editor_status("Save error: {}".format(exc));
+            return False;
 
     def check_buffer(self):
         try:
@@ -415,15 +497,27 @@ Debug commands are placeholders until the debugger runtime is implemented.
             self.app.invalidate();
         return bool(changed);
 
-    def close_current_window(self, window=None):
-        target = window or self.workspace.active_window;
-        if target is None:
-            return False;
+    def _close_current_window_now(self, target):
         changed = self.workspace.close(target);
         if changed:
             self._update_editor_status("Closed window: {}".format(target.title));
             self.app.invalidate();
         return bool(changed);
+
+    def close_current_window(self, window=None):
+        target = window or self.workspace.active_window;
+        if target is None:
+            return False;
+        if target is self.code_window and self.editor.modified:
+            return self._confirm_unsaved(lambda: self._close_current_window_now(target));
+        return self._close_current_window_now(target);
+
+    def _quit_now(self):
+        self.app.stop();
+        return True;
+
+    def quit(self):
+        return self._confirm_unsaved(self._quit_now);
 
     def toggle_window_maximize(self, window=None):
         target = window or self.workspace.active_window;
@@ -439,8 +533,8 @@ Debug commands are placeholders until the debugger runtime is implemented.
 
     def _window_menu(self):
         items = [
-            MenuItem("Next Window", self.switch_window, "F6"),
-            MenuItem("Maximize / Restore", self.toggle_window_maximize, "F11", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
+            MenuItem("Next Window", self.switch_window, "F6 / Ctrl+Tab"),
+            MenuItem("Maximize / Restore", self.toggle_window_maximize, "F11 / Alt+Enter", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
             MenuItem("Close current", self.close_current_window, "Ctrl+F4", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
             Separator(),
         ];
@@ -451,7 +545,7 @@ Debug commands are placeholders until the debugger runtime is implemented.
                 entries = [];
                 if window.visible:
                     entries.append(MenuItem("Activate", lambda selected=window: self.activate_window(selected), radio=lambda selected=window: workspace.active_window is selected));
-                    entries.append(MenuItem("Restore" if window.maximized else "Maximize", lambda selected=window: self.toggle_window_maximize(selected), "F11"));
+                    entries.append(MenuItem("Restore" if window.maximized else "Maximize", lambda selected=window: self.toggle_window_maximize(selected), "F11 / Alt+Enter"));
                     entries.append(MenuItem("Close", lambda selected=window: self.close_current_window(selected)));
                 else:
                     entries.append(MenuItem("Open", lambda selected=window: self.activate_window(selected)));
@@ -459,10 +553,12 @@ Debug commands are placeholders until the debugger runtime is implemented.
         return Menu("Window", items);
 
     def _append_program_output(self, text):
-        current = self.output_view.text;
         piece = str(text);
-        self.output_view.set_text((current + "\n" if current and current != "Ready. F5 runs the current buffer." else "") + piece);
-        self.output_view.offset = max(0, len(self.output_view.lines) - self.output_view.page_size);
+        if self.output_view.text == "Ready. F5 runs the current buffer.":
+            self.output_view.set_text("");
+        if piece and not piece.endswith("\n"):
+            piece += "\n";
+        self.output_view.append_text(piece);
         return True;
 
     def _handle_result(self, result):

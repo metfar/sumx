@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.10
+
+- F2 now opens the xBase Program Map (MAIN, PROCEDURE, FUNCTION, classes/methods) instead of saving. Ctrl+S remains Save.
+- Standardized Ctrl+O Open, Ctrl+F Find, Ctrl+X Cut, Ctrl+Q Quit, F5/Ctrl+R Run/Stop, F6/Ctrl+Tab Next Window and F11/Alt+Enter Maximize/Restore.
+- Added Termux-friendly Alt menu accelerators and Alt+P Program Map.
+- Added SAVE_AND_EXIT / FORGET_AND_EXIT / CANCEL protection before destructive actions on modified source.
+- Output and Command now use visible scroll panes, and program output preserves line boundaries.
+- Requires sumTUI 0.5.22 or newer. Regression suite: 95 tests.
+
 ## 0.1.9
 
 - Migrated the source IDE to sumTUI 0.5.20 `Workspace` windows. Code, Output, and the stateful xBase Command console are now separate movable/overlapping windows rather than a fixed editor plus combined output/command area.
