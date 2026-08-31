@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.12
+
+- sumX source-editor windows now expose the shared sumTUI 0.5.28 geometry controls: drag the lower-right corner to resize, Alt+M for keyboard Move, and Alt+Z for keyboard Resize.
+- In keyboard Move/Resize, arrows adjust one cell, Shift+arrows adjust five, Enter accepts, and Escape restores the original geometry.
+- Added Move/Resize to the Window menu and editor-key help; requires `sumtui>=0.5.28`.
+
 ## 0.1.11
 
 - F2 Program Map now opens with the entry containing the current editor cursor already selected, matching the shared QBasic-style navigation behavior in sumTUI 0.5.27.

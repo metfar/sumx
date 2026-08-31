@@ -91,6 +91,8 @@ class SumXEditorApp(SumXConsoleApp):
             self.app.bind(key, lambda index=index: self.open_menu(index));
         self.app.bind("f11", self.toggle_window_maximize);
         self.app.bind("alt+enter", self.toggle_window_maximize);
+        self.app.bind("alt+m", self.begin_window_move);
+        self.app.bind("alt+z", self.begin_window_resize);
         self.app.bind("ctrl+f4", self.close_current_window);
         self.output_view = TextView("Ready. F5 runs the current buffer.");
         self.output_pane = TextViewPane(self.output_view);
@@ -421,6 +423,7 @@ class SumXEditorApp(SumXConsoleApp):
 
 - **F9** opens the top menu; **F10** exits.
 - **F1** contextual help; **F2** opens Program Map; **F5** toggles run/stop; **F6** cycles Code/Output/Command; **F11** maximizes/restores; **Ctrl+F4** closes the active window; **Ctrl+F6** compiles to Python.
+- **Alt+M** enters keyboard Move and **Alt+Z** enters keyboard Resize; use arrows (Shift+arrows = five cells), Enter to accept and Escape to cancel. The lower-right window corner can also be dragged with the mouse to resize.
 - **Ctrl+F9** runs the current buffer; **Alt+F9** checks it.
 - **Ctrl+Z / Ctrl+Y** undo/redo.
 - **Ctrl+C / Ctrl+X / Ctrl+V** copy/cut/paste. **Ctrl+S** saves, **Ctrl+O** opens and **Ctrl+Q** quits.
@@ -532,10 +535,28 @@ Debug commands are placeholders until the debugger runtime is implemented.
             self.app.invalidate();
         return bool(changed);
 
+    def begin_window_move(self):
+        if getattr(self, "workspace", None) is None or self.workspace.active_window is None:
+            return False;
+        changed = self.workspace.begin_move_active();
+        if changed:
+            self.app.invalidate();
+        return bool(changed);
+
+    def begin_window_resize(self):
+        if getattr(self, "workspace", None) is None or self.workspace.active_window is None:
+            return False;
+        changed = self.workspace.begin_resize_active();
+        if changed:
+            self.app.invalidate();
+        return bool(changed);
+
     def _window_menu(self):
         items = [
             MenuItem("Next Window", self.switch_window, "F6 / Ctrl+Tab"),
             MenuItem("Maximize / Restore", self.toggle_window_maximize, "F11 / Alt+Enter", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
+            MenuItem("Move...", self.begin_window_move, "Alt+M", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None and not self.workspace.active_window.maximized),
+            MenuItem("Resize...", self.begin_window_resize, "Alt+Z", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None and not self.workspace.active_window.maximized),
             MenuItem("Close current", self.close_current_window, "Ctrl+F4", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
             Separator(),
         ];

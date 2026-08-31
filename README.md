@@ -1,4 +1,4 @@
-# sumX 0.1.11
+# sumX 0.1.12
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -8,7 +8,7 @@ Install sumTUI first, then sumX:
 
 ```bash
 pip install ./sumtui-0.5.22.tar.gz
-pip install ./sumx-0.1.11.tar.gz
+pip install ./sumx-0.1.12.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -104,7 +104,7 @@ File  Edit  Search  Run  Debug  Options  Window  Help
 
 **F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/W/H` opens the corresponding top-level menu.
 
-File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F2 opens Program Map preselected on the procedure/function/class that contains the current cursor line; F5/Ctrl+R toggles Run/Stop; F6/Ctrl+Tab cycles Code → Output → Command; F11/Alt+Enter maximizes/restores the active window; Ctrl+F4 closes it; and Ctrl+F6 compiles to Python.** IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists.
+File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F2 opens Program Map preselected on the procedure/function/class that contains the current cursor line; F5/Ctrl+R toggles Run/Stop; F6/Ctrl+Tab cycles Code → Output → Command; F11/Alt+Enter maximizes/restores; Alt+M enters Move; Alt+Z enters Resize; Ctrl+F4 closes the active window; and Ctrl+F6 compiles to Python.** In Move/Resize mode, arrows adjust one cell, Shift+arrows five cells, Enter accepts, and Escape cancels. Mouse users can drag the lower-right window corner to resize. IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists.
 
 The editor uses **Ctrl+S** Save, **Ctrl+O** Open, **Ctrl+F** Find, **Ctrl+X** Cut and **Ctrl+Q** Quit. Before New/Open/Quit or closing a modified Code window discards edits, it asks for **SAVE_AND_EXIT**, **FORGET_AND_EXIT**, or **CANCEL**. Output and Command expose visible scrolling, and Alt+F/E/S/R/D/O/W/H plus Alt+P make the IDE usable from Termux without function keys. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
 
