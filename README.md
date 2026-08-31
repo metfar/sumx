@@ -1,4 +1,4 @@
-# sumX 0.1.12
+# sumX 0.1.13
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -8,7 +8,7 @@ Install sumTUI first, then sumX:
 
 ```bash
 pip install ./sumtui-0.5.22.tar.gz
-pip install ./sumx-0.1.12.tar.gz
+pip install ./sumx-0.1.13.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -821,5 +821,9 @@ For a built-in theme, generated Python stores the built-in theme name. For a use
 
 Python example: `examples/python/theme_embedding.py`. Bash example: `examples/bash/compile_theme.sh`.
 
+
+### Persistent IDE window layout
+
+The Code, Output and Command workspace remembers each window position, size and maximized state when the IDE closes. Use **Window -> Reset Window Layout** to restore the built-in defaults and clear the saved geometry. Window layout is stored separately from the manually saved editor/theme options.
 
 <p align=center><b>- oOo -<b></p>

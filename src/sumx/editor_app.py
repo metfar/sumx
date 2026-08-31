@@ -108,7 +108,15 @@ class SumXEditorApp(SumXConsoleApp):
         self.code_window = WorkspaceWindow(self.editor, title="Code - {}".format(self.path.name), name="code", left=1, top=0, width=code_width, height=code_height, content_style="viewer");
         self.output_window = WorkspaceWindow(self.output_pane, title="Output", name="output", left=3, top=max(1, available_height - output_height), width=output_width, height=output_height, content_style="viewer");
         self.command_window = WorkspaceWindow(self.command_pane, title="Command", name="command", left=max(0, available_width - command_width - 1), top=max(1, available_height - command_height - 1), width=command_width, height=command_height, content_style="command");
-        self.workspace = Workspace(self.output_window, self.command_window, self.code_window);
+        self.workspace = Workspace(
+            self.output_window,
+            self.command_window,
+            self.code_window,
+            layout_id="sumx",
+            layout_path=self.config_path.with_name("workspaces.json"),
+            viewport_width=available_width,
+            viewport_height=available_height,
+        );
         body = VBox(self.workspace, self.status, self.bar, sizes=[None, 1, 1]);
         self.desktop = MenuDesktop(self.menu, body);
         self.app.set_root(self.desktop);
@@ -523,6 +531,13 @@ Debug commands are placeholders until the debugger runtime is implemented.
     def quit(self):
         return self._confirm_unsaved(self._quit_now);
 
+    def run(self):
+        self.workspace.load_layout();
+        try:
+            return self.app.run();
+        finally:
+            self.workspace.save_layout();
+
     def toggle_window_maximize(self, window=None):
         target = window or self.workspace.active_window;
         if target is None:
@@ -551,6 +566,12 @@ Debug commands are placeholders until the debugger runtime is implemented.
             self.app.invalidate();
         return bool(changed);
 
+    def reset_window_layout(self):
+        self.workspace.reset_layout(clear_saved=True);
+        self._update_editor_status("Window layout restored to defaults");
+        self.app.invalidate();
+        return True;
+
     def _window_menu(self):
         items = [
             MenuItem("Next Window", self.switch_window, "F6 / Ctrl+Tab"),
@@ -558,6 +579,7 @@ Debug commands are placeholders until the debugger runtime is implemented.
             MenuItem("Move...", self.begin_window_move, "Alt+M", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None and not self.workspace.active_window.maximized),
             MenuItem("Resize...", self.begin_window_resize, "Alt+Z", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None and not self.workspace.active_window.maximized),
             MenuItem("Close current", self.close_current_window, "Ctrl+F4", enabled=getattr(self, "workspace", None) is not None and self.workspace.active_window is not None),
+            MenuItem("Reset Window Layout", self.reset_window_layout),
             Separator(),
         ];
         workspace = getattr(self, "workspace", None);

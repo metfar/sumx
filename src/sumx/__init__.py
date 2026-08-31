@@ -22,7 +22,7 @@
 #
 #import warnings;
 #warnings.filterwarnings("ignore", category=UserWarning);
-__version__ = "0.1.12";
+__version__ = "0.1.13";
 
 from .compiler import CompileError, check_source, compile_file, compile_source;
 from .database import SumXDatabase, WorkArea;

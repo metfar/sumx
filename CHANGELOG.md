@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.13
+
+- sumX IDE now restores Code, Output and Command window geometry across runs through the common sumTUI workspace layout store.
+- Added **Window -> Reset Window Layout** to restore default positions/sizes and clear persisted geometry.
+- Updated the sumTUI dependency to 0.5.29 for workspace layout persistence.
+
 ## 0.1.12
 
 - sumX source-editor windows now expose the shared sumTUI 0.5.28 geometry controls: drag the lower-right corner to resize, Alt+M for keyboard Move, and Alt+Z for keyboard Resize.
