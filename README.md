@@ -1,4 +1,4 @@
-# sumX 0.1.13
+# sumX 0.1.14
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -7,8 +7,9 @@ sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The cu
 Install sumTUI first, then sumX:
 
 ```bash
-pip install ./sumtui-0.5.22.tar.gz
-pip install ./sumx-0.1.13.tar.gz
+pip install ./sumtui-0.6.0.tar.gz
+pip install ./sumdiff-0.1.0a2.tar.gz
+pip install ./sumx-0.1.14.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -36,6 +37,9 @@ sumx -c 'A=SQL.SELECT count(*) FROM customers;'
 ```
 
 Generated `.py` files receive executable permission on Unix and intentionally depend on the installed sumX runtime. There is no standalone/native compilation target.
+
+
+When the optional `sumdiff` companion is installed, the source IDE exposes **File -> Compare with...**. It passes the current `.prg` editor buffer directly to sumdiff, including unsaved edits; if the source is saved while comparing, sumX reloads that saved version when the comparison closes.
 
 
 ## Running applications without the development assistant

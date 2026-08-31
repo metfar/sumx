@@ -1195,3 +1195,13 @@ class EditorShortcutMapTests(unittest.TestCase):
             self.assertIn('ctrl+r', app.app.bindings);
             self.assertIn('ctrl+tab', app.app.bindings);
             self.assertIn('alt+enter', app.app.bindings);
+
+class SumDiffMenuIntegrationTests(unittest.TestCase):
+    def test_editor_file_menu_contains_compare_with(self):
+        from sumx.editor_app import SumXEditorApp;
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "demo.prg";
+            path.write_text('? "hello"\n', encoding="utf-8");
+            app = SumXEditorApp(path);
+            labels = [item.label for item in app._editor_menus()[0].items if getattr(item, "label", "")];
+            self.assertIn("Compare with...", labels);

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+- Integrated the source editor with optional `sumdiff` through **File -> Compare with...**.
+- The live xBase buffer is handed to sumdiff without requiring a preliminary save; if sumdiff saves the source, the sumX editor reloads that file on return.
+- Updated the dependency to `sumTUI >= 0.6.0`; `sumdiff` remains an optional separate application rather than a hard sumX dependency.
+- Regression suite: 97 tests.
+
 ## 0.1.13
 
 - sumX IDE now restores Code, Output and Command window geometry across runs through the common sumTUI workspace layout store.

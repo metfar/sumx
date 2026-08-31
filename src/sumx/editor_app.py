@@ -132,6 +132,8 @@ class SumXEditorApp(SumXConsoleApp):
                 MenuItem("Save", self.save, "Ctrl+S"),
                 MenuItem("Save As...", self.save_as_dialog),
                 Separator(),
+                MenuItem("Compare with...", self.compare_with_dialog),
+                Separator(),
                 MenuItem("Exit", self.quit, "Ctrl+Q / F10"),
             ]),
             Menu("Edit", [
@@ -295,6 +297,44 @@ class SumXEditorApp(SumXConsoleApp):
         body = VBox(entry, HBox(Button("Save", on_press=accepted, default=True), Button("Cancel", on_press=close), ratios=[1, 1]), sizes=[1, None]);
         self.app.push_modal(Dialog(body, title="Save As", width=72, height=7, on_cancel=close));
         self.app.focus.set(entry);
+        self.app.invalidate();
+        return True;
+
+    def compare_with_dialog(self):
+        if not self.path.exists():
+            return self.save(on_saved=self.compare_with_dialog);
+        start = self.path.parent if self.path is not None else Path.cwd();
+        def close(*_args):
+            self._close_modal();
+            return True;
+        def accepted(path):
+            selected = Path(path).expanduser().resolve();
+            close();
+            if selected == self.path.resolve():
+                self._update_editor_status("Choose a different file to compare");
+                return False;
+            try:
+                from sumtui.compare_integration import SumDiffUnavailable, launch_sumdiff;
+                compare_app = launch_sumdiff(self.app, [self.path, selected], mode="compare", theme=self.app.theme.name, text_overrides={self.path: self.editor.text});
+            except SumDiffUnavailable:
+                self._update_editor_status("sumdiff is not installed; install sumdiff to use Compare");
+                return False;
+            except Exception as exc:
+                self._update_editor_status("Compare error: {}".format(exc));
+                return False;
+            saved = {Path(item).expanduser().resolve() for item in getattr(compare_app, "saved_paths", set())};
+            if self.path.resolve() in saved:
+                try:
+                    self._set_document(TextDocument.load(self.path), path=self.path);
+                except Exception as exc:
+                    self._update_editor_status("Compare reload error: {}".format(exc));
+                    return False;
+            self.menu.menus = self._editor_menus();
+            self.app.focus.set(self.editor);
+            self.app.invalidate();
+            return True;
+        dialog = FileDialog(path=start, title="Compare with file", on_accept=accepted, on_cancel=close, theme=self.app.theme);
+        self.app.push_modal(dialog);
         self.app.invalidate();
         return True;
 
