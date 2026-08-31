@@ -26,7 +26,7 @@ from pathlib import Path;
 
 from sumtui import Button, CommandWindow, CommandWindowPane, Dialog, FileDialog, FunctionBar, HBox, Label, ListView, Menu, MenuBar, MenuDesktop, MenuItem, Separator, StatusBar, TextEditor, TextInput, TextView, TextViewPane, VBox, Workspace, WorkspaceWindow;
 from sumtui.document import TextDocument;
-from sumtui.symbols import build_symbol_map;
+from sumtui.symbols import build_symbol_map, symbol_index_for_line;
 
 from .compiler import check_source, compile_source;
 from .console import SumXConsoleApp;
@@ -294,6 +294,7 @@ class SumXEditorApp(SumXConsoleApp):
     def symbol_map_dialog(self):
         symbols = self.symbol_map();
         listing = ListView([(item.label, item) for item in symbols], title="Functions / Classes / Main");
+        listing.select(symbol_index_for_line(symbols, self.editor.cursor_line));
         def close(*_args):
             self._close_modal();
             return True;

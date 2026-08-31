@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.11
+
+- F2 Program Map now opens with the entry containing the current editor cursor already selected, matching the shared QBasic-style navigation behavior in sumTUI 0.5.27.
+- Updated the declared sumTUI dependency to `sumtui>=0.5.27`.
+- Regression suite: 96 tests.
+
 ## 0.1.10
 
 - F2 now opens the xBase Program Map (MAIN, PROCEDURE, FUNCTION, classes/methods) instead of saving. Ctrl+S remains Save.

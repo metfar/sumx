@@ -926,6 +926,18 @@ class FileTests(unittest.TestCase):
                 x.runtime.db.close();
 
 
+
+    def test_editor_program_map_preselects_current_procedure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "map_current.prg";
+            path.write_text("PROCEDURE One\nRETURN\n\nPROCEDURE Two\n? 2\nRETURN\n", encoding="utf-8");
+            app = SumXEditorApp(path);
+            app.editor.goto_line(5, 1);
+            self.assertTrue(app.symbol_map_dialog());
+            listing = app.app.focus.current;
+            self.assertEqual(listing.current_value.name.strip(), "Two");
+            app.app.pop_modal();
+
 if __name__ == "__main__":
     unittest.main();
 
