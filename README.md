@@ -1,6 +1,6 @@
-# sumX 0.2.0
+# sumX 0.2.1
 
-**0.2.0 architecture note:** positional source editing now delegates to the independent `sumIDE` xBase profile. The interpreter, SQLite/database runtime, console, `--run`, `--check`, and readable `--compile` path remain in sumX.
+**0.2.1 architecture note:** positional source editing now delegates to the independent `sumIDE` xBase profile. The interpreter, SQLite/database runtime, console, `--run`, `--check`, and readable `--compile` path remain in sumX.
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -10,9 +10,9 @@ Install sumTUI first, then sumX:
 
 ```bash
 pip install ./sumtui-0.7.0.tar.gz
-pip install ./sumide-0.2.0.tar.gz
-pip install ./sumdiff-0.2.0.tar.gz
-pip install ./sumx-0.2.0.tar.gz
+pip install ./sumide-0.2.1.tar.gz
+pip install ./sumdiff-0.2.1.tar.gz
+pip install ./sumx-0.2.1.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -103,7 +103,7 @@ Passing a source file positionally opens the common sumIDE xBase profile:
 sumx examples/hello.prg
 ```
 
-The editor is the shared `sumIDE 0.2.0` shell, with xBase execution supplied by sumX. Its top-level menus are:
+The editor is the shared `sumIDE 0.2.1` shell, with xBase execution supplied by sumX. Its top-level menus are:
 
 ```text
 File  Edit  Search  View  Options  Window  Run  Help
@@ -809,5 +809,12 @@ Python example: `examples/python/theme_embedding.py`. Bash example: `examples/ba
 ### Persistent IDE window layout
 
 The Code, Output and Command workspace remembers each window position, size and maximized state when the IDE closes. Use **Window -> Reset Window Layout** to restore the built-in defaults and clear the saved geometry. Window layout is stored separately from the manually saved editor/theme options.
+
+
+## Default interactive workspace
+
+Running `sumx` with no arguments opens the common `sumIDE --language=xbase` workspace.  The **Command** window is visible and initially focused, while source programs can be created, opened, saved, saved as, and closed from **File**.  `sumx --console` retains the compact historical command-only frontend.
+
+In the interactive help explorer, **F6** or **Ctrl+C** copies the current functional example to the clipboard; **F5** runs it.
 
 <p align=center><b>- oOo -<b></p>

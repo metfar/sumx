@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 - 2026-09-01
+
+- `sumx` with no arguments now opens the common sumIDE xBase workspace with Command visible and initially focused.
+- Added `sumx --console` for the historical command-only frontend.
+- Source programs remain managed through sumIDE File operations, including the new Close action.
+- sumX Help now supports F6 / Ctrl+C to copy the current functional example while F5 continues to run it.
+- Requires `sumTUI >= 0.7.1` and `sumIDE >= 0.2.1`.
+
 ## 0.2.0 - 2026-09-01
 
 - Started the post-split sumX release line: the xBase interpreter, SQLite/database runtime, command environment, `--run`, `--check` and readable Python `--compile` remain in sumX, while positional source editing delegates to the independent `sumIDE` xBase profile.

@@ -1208,3 +1208,36 @@ class SumDiffMenuIntegrationTests(unittest.TestCase):
             app = SumXEditorApp(path);
             labels = [item.label for item in app._editor_menus()[0].items if getattr(item, "label", "")];
             self.assertIn("Compare with...", labels);
+
+
+class SumXDefaultWorkspaceTests(unittest.TestCase):
+    def test_sumx_without_arguments_opens_common_ide_with_command_focused(self):
+        import sumx.cli as cli;
+        fake_window = object();
+        with patch("sumx.cli.SumXEditorApp") as editor_class, patch("sys.stdin.isatty", return_value=True), patch("sys.stdout.isatty", return_value=True):
+            editor = editor_class.return_value;
+            editor.command_window = fake_window;
+            editor.run.return_value = 23;
+            self.assertEqual(cli.main([]), 23);
+            editor_class.assert_called_once();
+            editor.activate_workspace_window.assert_called_once_with(fake_window);
+            editor._update_status.assert_called_once();
+
+    def test_sumx_console_switch_keeps_classic_command_frontend(self):
+        import sumx.cli as cli;
+        with patch("sumx.cli.SumXConsoleApp") as console_class, patch("sys.stdin.isatty", return_value=True), patch("sys.stdout.isatty", return_value=True):
+            console_class.return_value.run.return_value = 17;
+            self.assertEqual(cli.main(["--console"]), 17);
+            console_class.assert_called_once();
+
+    def test_help_can_copy_current_functional_example(self):
+        from sumtui.clipboard import clipboard;
+        topic = find_topic("IF");
+        app = SumXConsoleApp();
+        try:
+            app._show_help(topic.markdown(), title="sumX Help - IF");
+            self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
+            self.assertEqual(clipboard.paste_text(), topic.example);
+            app.app.root.cancel();
+        finally:
+            app.interpreter.runtime.db.close();

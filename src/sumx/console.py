@@ -29,6 +29,7 @@ import subprocess;
 import time;
 
 from sumtui import Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, MarkdownView, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
+from sumtui.clipboard import clipboard;
 
 from . import __version__;
 from .config import default_config_path, load_config, resolve_theme, save_config, theme_names;
@@ -749,6 +750,21 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 return False;
             self._show_search(find, title="Help Search");
 
+        def copy_example():
+            topic = current.get("topic");
+            if topic is None:
+                copied = viewer.copy_code_block(-1);
+                if not copied:
+                    clipboard.copy_text(viewer.markdown);
+                    hints.set("Help text copied");
+                else:
+                    hints.set("Code example copied");
+            else:
+                clipboard.copy_text(topic.example);
+                hints.set("Example copied: {}".format(topic.name));
+            self.app.invalidate();
+            return True;
+
         def run_example():
             topic = current.get("topic");
             if topic is None:
@@ -762,11 +778,11 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 self.run_program(example, name="<help:{}>".format(topic.name));
             return True;
 
-        hints = StatusBar("Tab Topic/Text  F3 Search  F5 Run Example  F11 Max/Restore  Esc Close");
+        hints = StatusBar("Tab Topic/Text  F3 Search  F5 Run Example  F6/Ctrl+C Copy Example  F11 Max/Restore  Esc Close");
         body = HBox(topics, viewer, sizes=[26, None]);
         content = VBox(body, hints, sizes=[None, 1]);
         dialog = Dialog(content, title=title, width=104, height=30, on_cancel=close, padding=(0, 1), maximizable=True);
-        self.app.push_modal(dialog, bindings={"f3": search, "f5": run_example});
+        self.app.push_modal(dialog, bindings={"f3": search, "f5": run_example, "f6": copy_example, "ctrl+c": copy_example});
         self.app.focus.set(topics);
 
     def _show_search(self, on_find, title="Search"):

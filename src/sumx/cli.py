@@ -186,6 +186,7 @@ def main(argv=None):
     parser.add_argument("-o", "--output", help="output file for --compile; use - for stdout");
     parser.add_argument("--database", default=":memory:", help="SQLite database path (default: in-memory)");
     parser.add_argument("--plain", action="store_true", help="force textual terminal I/O; with --run, disable sumTUI dialogs/forms/browse windows");
+    parser.add_argument("--console", action="store_true", help="open the classic command-only sumX frontend instead of the common sumIDE xBase workspace");
     parser.add_argument("--theme", default=None, help="sumTUI theme for this interactive session; saved configuration is used when omitted");
     parser.add_argument("--config", help="configuration file path (default: XDG_CONFIG_HOME/sumx/config.json or ~/.config/sumx/config.json)");
     parser.add_argument("--list-themes", action="store_true", help="list available sumTUI themes and exit");
@@ -207,7 +208,7 @@ def main(argv=None):
     selected_theme = resolve_theme(args.theme, config);
     if args.output and not args.compile_program:
         parser.error("--output requires --compile");
-    if args.file and (args.run or args.compile_program or args.check or args.command is not None):
+    if args.file and (args.run or args.compile_program or args.check or args.command is not None or args.console):
         parser.error("a positional .prg file opens the editor; use it separately from --run/--compile/--check/--command");
     if args.compile_program:
         try:
@@ -274,13 +275,22 @@ def main(argv=None):
             diagnostics.print("Opening a source file requires an interactive terminal. Use --run to execute it.", style="bold red");
             return 2;
         try:
-            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme).run();
+            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme, config_path=args.config).run();
         except Exception as exc:
             diagnostics.print("Error: {}".format(exc), style="bold red");
             return 1;
     if args.plain or not sys.stdin.isatty() or not sys.stdout.isatty():
         return plain_repl(interpreter);
-    return SumXConsoleApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
+    if args.console:
+        return SumXConsoleApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
+    try:
+        ide = SumXEditorApp(None, interpreter=interpreter, theme=args.theme, config_path=args.config);
+        ide.activate_workspace_window(ide.command_window);
+        ide._update_status("xBase Command - File manages source programs");
+        return ide.run();
+    except Exception as exc:
+        diagnostics.print("Error: {}".format(exc), style="bold red");
+        return 1;
 
 
 if __name__ == "__main__":
