@@ -616,6 +616,7 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 "", width=field_width, max_length=maximum, echo_mask=request.mask,
                 hidden=request.hidden, char_filter=char_filter, display_transform=display_transform,
                 display_cursor=display_cursor, clear_on_first_edit=clear_on_edit,
+                confirm_at_limit=self.interpreter.runtime.confirm,
             );
             entry_height = 1;
             entry.on_submit = lambda value: accept(value);
@@ -703,7 +704,9 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
 
         if target_command is self.command and hasattr(self, "workspace") and hasattr(self, "command_window"):
             self.workspace.activate(self.command_window);
-        if not target_command.begin_read(fields, on_accept=accept, on_cancel=cancel):
+        if not target_command.begin_read(
+            fields, on_accept=accept, on_cancel=cancel, confirm=self.interpreter.runtime.confirm,
+        ):
             self.command.write_error("READ: no fields");
         self.app.focus.set(target_command);
         self.app.invalidate();

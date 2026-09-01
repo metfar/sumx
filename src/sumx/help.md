@@ -422,6 +422,39 @@ PICTURE, GET
 
 FIELD_WRAP_OVERFLOW, SET FIELD WRAP OVERFLOW
 
+### SET CONFIRM
+
+Controls what happens when editing reaches the logical end of a bounded input field.
+
+#### Syntax
+
+```text
+SET CONFIRM ON
+SET CONFIRM OFF
+```
+
+#### Notes
+
+- ON is the sumX default: the field remains active until Enter, Tab or another navigation key confirms it.
+- While ON, typing beyond the logical end overwrites the final logical character repeatedly. A one-character field receiving `Y`, then `E`, then `S` therefore contains `S`.
+- OFF automatically advances to the next GET as soon as the logical limit is filled; on the last GET it accepts the READ.
+- The logical limit is independent of the visible WIDTH. A scrolling field may have a larger logical capacity than its viewport.
+- This setting mirrors the classic xBase/Fox `SET CONFIRM` concept while choosing ON as the safer modern default in sumX.
+
+#### Functional example
+
+```xbase
+answer = "N"
+SET CONFIRM ON
+@ 1,1 GET answer WIDTH 1 PICTURE "@! A"
+READ
+? answer
+```
+
+#### See also
+
+GET, READ, PICTURE
+
 ## Screen I/O
 
 ### GET
@@ -440,6 +473,7 @@ Defines an editable field at an absolute screen coordinate.
 - WIDTH is visible columns only.
 - HEIGHT defaults to 1; HEIGHT > 1 is a multiline textarea-like field.
 - READ starts in classic overwrite mode; typing into a full bounded field replaces the character under the caret instead of rejecting the keystroke.
+- With SET CONFIRM ON, further typing at the logical end repeatedly overwrites the final logical character; with SET CONFIRM OFF, filling the logical field advances automatically.
 - PICTURE validation is applied while typing, including transformations such as `@!` uppercase.
 - Tab moves to the next GET; Tab on the last GET accepts READ.
 
@@ -472,6 +506,7 @@ READ
 - In sumIDE, a screen READ automatically activates the Command workspace so its GET fields receive keyboard input.
 - A READ inside DEFINE WINDOW remains focused in that modal window.
 - Enter accepts the last one-line GET; Tab advances and accepts on the last field; Esc cancels.
+- SET CONFIRM ON keeps a bounded GET active at its logical end; SET CONFIRM OFF auto-advances when that logical limit is filled.
 
 #### Functional example
 

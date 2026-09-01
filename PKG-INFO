@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: sumx
-Version: 0.2.5
+Version: 0.2.6
 Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
 Author-email: William Martinez Bas <metfar@gmail.com>
 License: GPL-2.0-or-later
@@ -11,8 +11,8 @@ Classifier: Topic :: Database :: Database Engines/Servers
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: sumtui>=0.7.4
-Requires-Dist: sumide>=0.2.4
+Requires-Dist: sumtui>=0.7.5
+Requires-Dist: sumide>=0.2.5
 Requires-Dist: rich>=13.0
 Dynamic: license-file
 
@@ -697,7 +697,7 @@ ape=REPLICATE(" ",30);
 READ;
 ```
 
-`@ ... GET` fields are drawn at absolute coordinates in the sumTUI command workspace. A string initialized with `SPACE(n)` or `REPLICATE(" ",n)` becomes a fixed-width field of exactly `n` characters. `READ` activates all pending GETs. READ starts in classic overwrite mode, so a bounded field such as `answer="N"` with `WIDTH 1 PICTURE "@! A"` accepts a replacement character directly. In sumIDE, reaching a normal READ automatically activates Command so the field receives keyboard input; a READ inside `DEFINE WINDOW` keeps focus in that modal window instead. In one-line fields Enter advances and accepts on the last field; in multiline fields Enter inserts a newline. Tab advances in both modes and accepts on the final GET, Shift+Tab moves backward, Insert toggles insert/overwrite, and Esc cancels. When READ completes, the coordinate form is archived as ordinary command history before program execution continues, so finished GETs no longer remain live/highlighted in the output pane.
+`@ ... GET` fields are drawn at absolute coordinates in the sumTUI command workspace. A string initialized with `SPACE(n)` or `REPLICATE(" ",n)` becomes a fixed-width field of exactly `n` characters. `READ` activates all pending GETs. READ starts in classic overwrite mode. With `SET CONFIRM ON` (the sumX default), a bounded field such as `answer="N"` with `WIDTH 1 PICTURE "@! A"` remains active at its logical end; typing `Y`, `E`, `S` successively leaves the value `S`. `SET CONFIRM OFF` auto-advances as soon as the logical field limit is filled, accepting READ on the final GET. The logical limit is separate from visible WIDTH. In sumIDE, reaching a normal READ automatically activates Command so the field receives keyboard input; a READ inside `DEFINE WINDOW` keeps focus in that modal window instead. In one-line fields Enter advances and accepts on the last field; in multiline fields Enter inserts a newline. Tab advances in both modes and accepts on the final GET, Shift+Tab moves backward, Insert toggles insert/overwrite, and Esc cancels. When READ completes, the coordinate form is archived as ordinary command history before program execution continues, so finished GETs no longer remain live/highlighted in the output pane.
 
 ## BROWSE and APPEND are forms
 

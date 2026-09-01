@@ -66,6 +66,7 @@ Output / diagnostics:
   SET DEBUG_LEVEL DEBUG     (reserved for deeper diagnostics)
   SET DEBUG_LEVEL TRACE     (reserved for parser/runtime tracing)
   SET TALK ON/OFF           (xBase-style alias for INFO/OFF)
+  SET CONFIRM ON/OFF        (stay in bounded GET / auto-advance at logical end)
 
 Statement syntax:
   ; terminates a statement; a trailing \\ joins the next physical line
@@ -909,6 +910,14 @@ class Interpreter:
                 raise SumXError("FIELD_WRAP_OVERFLOW expects ON/OFF or TRUE/FALSE");
             self.runtime.set_field_wrap_overflow(value);
             return self._message("FIELD_WRAP_OVERFLOW {}".format("ON" if value else "OFF"));
+
+        match = re.match(r"(?is)^SET\s+CONFIRM\s+(.+)$", text);
+        if match:
+            value = self.evaluate(match.group(1));
+            if not isinstance(value, bool):
+                raise SumXError("CONFIRM expects ON/OFF or TRUE/FALSE");
+            self.runtime.set_confirm(value);
+            return self._message("CONFIRM {}".format("ON" if value else "OFF"));
 
         match = re.match(r"(?is)^SET\s+LINE_CONTINUATION\s+(?:TO\s+)?(BACKSLASH|SEMICOLON)$", text);
         if match:

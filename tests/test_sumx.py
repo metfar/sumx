@@ -116,6 +116,58 @@ class EditorMenuTests(unittest.TestCase):
             finally:
                 app.interpreter.runtime.db.close();
 
+    def test_editor_confirm_on_keeps_bounded_get_active_and_replaces_last_character_repeatedly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "confirm_on.prg";
+            path.write_text(
+                'answer = "N"\n'
+                'SET CONFIRM ON\n'
+                '@ 3, 2 GET answer WIDTH 1 PICTURE "@! A"\n'
+                'READ\n'
+                'PRINT "Respuesta: " + answer\n',
+                encoding="utf-8",
+            );
+            app = SumXEditorApp(path);
+            try:
+                self.assertTrue(app.run_buffer());
+                self.assertTrue(app.command.read_active);
+                for char in "YES":
+                    self.assertTrue(app.app.dispatch(KeyEvent(char.lower(), text=char)));
+                    self.assertTrue(app.command.read_active);
+                self.assertEqual(app.command.read_values()["answer"], "S");
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.ENTER)));
+                self.assertFalse(app.program_active);
+                self.assertIn("Respuesta: S", app.output_view.text);
+            finally:
+                app.interpreter.runtime.db.close();
+
+    def test_editor_confirm_off_auto_advances_and_accepts_final_get(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "confirm_off.prg";
+            path.write_text(
+                'first = ""\n'
+                'second = ""\n'
+                'SET CONFIRM OFF\n'
+                '@ 1, 1 GET first WIDTH 1 PICTURE "X"\n'
+                '@ 2, 1 GET second WIDTH 1 PICTURE "X"\n'
+                'READ\n'
+                'PRINT first + second\n',
+                encoding="utf-8",
+            );
+            app = SumXEditorApp(path);
+            try:
+                self.assertTrue(app.run_buffer());
+                self.assertTrue(app.command.read_active);
+                self.assertTrue(app.app.dispatch(KeyEvent("y", text="Y")));
+                self.assertTrue(app.command.read_active);
+                self.assertEqual(app.command.read_index, 1);
+                self.assertTrue(app.app.dispatch(KeyEvent("n", text="N")));
+                self.assertFalse(app.command.read_active);
+                self.assertFalse(app.program_active);
+                self.assertIn("YN", app.output_view.text);
+            finally:
+                app.interpreter.runtime.db.close();
+
     def test_editor_named_window_read_accepts_input_and_closes_cleanly(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "window.prg";
@@ -139,7 +191,9 @@ class EditorMenuTests(unittest.TestCase):
                 self.assertIsNone(child.content_style);
                 self.assertTrue(child.read_active);
                 self.assertEqual(app.app.modal_depth, 1);
-                self.assertTrue(app.app.dispatch(KeyEvent("s", text="s")));
+                for char in "YES":
+                    self.assertTrue(app.app.dispatch(KeyEvent(char.lower(), text=char)));
+                    self.assertTrue(child.read_active);
                 self.assertEqual(child.read_values()["answer"], "S");
                 self.assertTrue(app.app.dispatch(KeyEvent(Key.ENTER)));
                 self.assertEqual(app.app.modal_depth, 0);
@@ -258,6 +312,15 @@ class LanguageTests(InterpreterTestCase):
         result = self.x.execute('@2,3 SAY "GET value:" GET nom');
         self.assertEqual(result.results[0].text, "GET value:");
         self.assertEqual(result.results[1].field.column, 14);
+
+    def test_set_confirm_controls_runtime_field_confirmation(self):
+        self.assertTrue(self.x.runtime.confirm);
+        result = self.x.execute("SET CONFIRM OFF");
+        self.assertFalse(self.x.runtime.confirm);
+        self.assertIn("CONFIRM OFF", result.text);
+        result = self.x.execute("SET CONFIRM ON");
+        self.assertTrue(self.x.runtime.confirm);
+        self.assertIn("CONFIRM ON", result.text);
 
     def test_commands_are_case_insensitive(self):
         self.x.execute("create table t (id autonum, name varchar(20))");

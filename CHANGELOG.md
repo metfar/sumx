@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.6 - 2026-09-01
+
+- Fixed bounded GET editing at the logical end: with confirmation enabled, a one-character field receiving `Y`, `E`, `S` now remains active and ends with `S`; subsequent keys overwrite the final logical character instead of being ignored.
+- Added `SET CONFIRM ON/OFF`. ON is the sumX default and requires explicit Enter/Tab/navigation to leave a bounded GET; OFF auto-advances when the logical field limit is filled and accepts READ on the final GET.
+- Routed PICTURE validation through the actual logical replacement cell at the end of a full field, so masks such as `PICTURE "@! A"` continue to accept and transform repeated replacement keystrokes.
+- Applied the same confirmation policy to xBase INPUT/dialog text fields through the common sumTUI bounded-field implementation.
+- Requires `sumTUI >= 0.7.5` and `sumIDE >= 0.2.5`.
+
 ## 0.2.5 - 2026-09-01
 
 - Fixed GET/READ keyboard routing in the common sumIDE shell: when a running xBase program reaches a normal screen READ, the Command workspace is activated so the field actually receives keystrokes.

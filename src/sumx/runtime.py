@@ -36,6 +36,7 @@ class Runtime:
         self.caps_sensitive = False;
         self.debug_level = "OFF";
         self.field_wrap_overflow = False;
+        self.confirm = True;
         self.line_continuation = "BACKSLASH";
         self.ampersand_comment = False;
         self.windows = {};
@@ -90,6 +91,10 @@ class Runtime:
     def set_field_wrap_overflow(self, enabled):
         self.field_wrap_overflow = bool(enabled);
         return self.field_wrap_overflow;
+
+    def set_confirm(self, enabled):
+        self.confirm = bool(enabled);
+        return self.confirm;
 
     def set_screen_size_provider(self, provider):
         self._screen_size_provider = provider if callable(provider) else None;
