@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5 - 2026-09-01
+
+- Fixed GET/READ keyboard routing in the common sumIDE shell: when a running xBase program reaches a normal screen READ, the Command workspace is activated so the field actually receives keystrokes.
+- Fixed classic overwrite semantics for bounded/Picture GETs: a one-character field initialized to `N` can be replaced directly by typing `Y`, `S`, etc., without deleting the default first. PICTURE validation still applies while typing.
+- Fixed `DEFINE WINDOW` rendering so unoccupied cells and `@ ... PRINT` text inherit the selected `COLOR SCHEME` background instead of leaking the global Command-window background through the dialog.
+- Verified the same READ behavior inside a named window: the modal window receives input, accepts Enter/Tab, resumes the program, deactivates/releases cleanly, and returns subsequent PRINT output to the IDE Output pane.
+- Updated the common IDE integration for the visible Code/Output/Command startup layout and Output-on-F5 behavior.
+
 ## 0.2.4 - 2026-09-01
 
 - Kept `help.md` as the canonical editable xBase reference while switching runtime loading to the generated `help.helpdb` cache.

@@ -213,6 +213,8 @@ RELEASE WINDOW name
 #### Notes
 
 - @ row,column coordinates are relative to the active window while it is active.
+- The positioned screen inherits the window COLOR SCHEME; blank cells around PRINT text no longer fall back to the global Command background.
+- A READ inside the window keeps keyboard focus in that window until the GETs are accepted or cancelled.
 - SHOW/HIDE WINDOW are accepted as ACTIVATE/DEACTIVATE aliases.
 
 #### Functional example
@@ -437,6 +439,8 @@ Defines an editable field at an absolute screen coordinate.
 
 - WIDTH is visible columns only.
 - HEIGHT defaults to 1; HEIGHT > 1 is a multiline textarea-like field.
+- READ starts in classic overwrite mode; typing into a full bounded field replaces the character under the caret instead of rejecting the keystroke.
+- PICTURE validation is applied while typing, including transformations such as `@!` uppercase.
 - Tab moves to the next GET; Tab on the last GET accepts READ.
 
 #### Functional example
@@ -462,6 +466,12 @@ Activates pending GET fields and writes accepted values back to their variables.
 ```text
 READ
 ```
+
+#### Notes
+
+- In sumIDE, a screen READ automatically activates the Command workspace so its GET fields receive keyboard input.
+- A READ inside DEFINE WINDOW remains focused in that modal window.
+- Enter accepts the last one-line GET; Tab advances and accepts on the last field; Esc cancels.
 
 #### Functional example
 

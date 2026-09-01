@@ -667,7 +667,7 @@ DEACTIVATE WINDOW wDialogo
 RELEASE WINDOW wDialogo
 ```
 
-While the window is active, `@ row,column` coordinates are relative to its interior. `SHOW WINDOW`/`HIDE WINDOW` are accepted as aliases for activate/deactivate. This is intentionally implemented through sumTUI rather than as a second windowing system inside the language. In the full-screen sumTUI environment the named window is rendered as a real positioned window; plain/compiled execution deliberately degrades the same program to ordinary textual input/output. See `examples/window.prg`.
+While the window is active, `@ row,column` coordinates are relative to its interior. `SHOW WINDOW`/`HIDE WINDOW` are accepted as aliases for activate/deactivate. The interior screen surface inherits the window `COLOR SCHEME`, including blank cells around positioned text; only active GET/cursor cells use their intentional field/caret emphasis. This is implemented through sumTUI rather than as a second windowing system inside the language. In the full-screen sumTUI environment the named window is rendered as a real positioned window; plain/compiled execution deliberately degrades the same program to ordinary textual input/output. See `examples/window.prg`.
 
 ## Classic GET / READ screen input
 
@@ -679,7 +679,7 @@ ape=REPLICATE(" ",30);
 READ;
 ```
 
-`@ ... GET` fields are drawn at absolute coordinates in the sumTUI command workspace. A string initialized with `SPACE(n)` or `REPLICATE(" ",n)` becomes a fixed-width field of exactly `n` characters. `READ` activates all pending GETs. In one-line fields Enter advances and accepts on the last field; in multiline fields Enter inserts a newline. Tab advances in both modes and accepts on the final GET, Shift+Tab moves backward, Insert toggles insert/overwrite, and Esc cancels. When READ completes, the coordinate form is archived as ordinary command history before program execution continues, so finished GETs no longer remain live/highlighted in the output pane.
+`@ ... GET` fields are drawn at absolute coordinates in the sumTUI command workspace. A string initialized with `SPACE(n)` or `REPLICATE(" ",n)` becomes a fixed-width field of exactly `n` characters. `READ` activates all pending GETs. READ starts in classic overwrite mode, so a bounded field such as `answer="N"` with `WIDTH 1 PICTURE "@! A"` accepts a replacement character directly. In sumIDE, reaching a normal READ automatically activates Command so the field receives keyboard input; a READ inside `DEFINE WINDOW` keeps focus in that modal window instead. In one-line fields Enter advances and accepts on the last field; in multiline fields Enter inserts a newline. Tab advances in both modes and accepts on the final GET, Shift+Tab moves backward, Insert toggles insert/overwrite, and Esc cancels. When READ completes, the coordinate form is archived as ordinary command history before program execution continues, so finished GETs no longer remain live/highlighted in the output pane.
 
 ## BROWSE and APPEND are forms
 

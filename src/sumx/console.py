@@ -35,6 +35,7 @@ from . import __version__;
 from .config import default_config_path, load_config, resolve_theme, save_config, theme_names;
 from .helpdb import TOPICS, find_topic, index_markdown, topic_names;
 from .interpreter import HELP_TEXT, Interpreter;
+from .picture import picture_input_char;
 from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, FormRequest, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
 from .statements import needs_continuation, split_statements;
 
@@ -435,7 +436,7 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         if existing is not None:
             dialog, child = existing;
         else:
-            child = CommandWindow(prompt="", show_prompt=False, theme=self.app.theme);
+            child = CommandWindow(prompt="", show_prompt=False, theme=self.app.theme, content_style=None);
             dialog = Dialog(
                 child,
                 title=str(definition.get("title") or name),
@@ -658,8 +659,12 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             target_command = self._window_command(next(iter(window_names)));
             if target_command is None:
                 raise RuntimeError("READ target window is not active");
-        fields = [
-            {
+        fields = [];
+        for field in request.fields:
+            char_filter = None;
+            if field.picture:
+                char_filter = lambda position, char, picture=field.picture, overflow=field.overflow: picture_input_char(picture, position, char, overflow=overflow);
+            fields.append({
                 "name": field.target,
                 "row": field.row,
                 "column": field.column,
@@ -671,9 +676,8 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 "multiline": field.height > 1,
                 "picture": field.picture,
                 "overflow": field.overflow,
-            }
-            for field in request.fields
-        ];
+                "char_filter": char_filter,
+            });
 
         def accept(values, _widget):
             try:
@@ -697,6 +701,8 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             if after_done is not None:
                 after_done();
 
+        if target_command is self.command and hasattr(self, "workspace") and hasattr(self, "command_window"):
+            self.workspace.activate(self.command_window);
         if not target_command.begin_read(fields, on_accept=accept, on_cancel=cancel):
             self.command.write_error("READ: no fields");
         self.app.focus.set(target_command);

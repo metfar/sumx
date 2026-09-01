@@ -104,6 +104,7 @@ class SumXEditorApp(ScriptIDE, SumXConsoleApp):
         name = str(self.document.path or self.path);
         self.output_view.set_text("--- Run {} ---\n".format(Path(name).name));
         self.workspace.show(self.output_window);
+        self.workspace.activate(self.output_window);
         self._program_cooperative = True;
         self.app.add_idle(self._program_idle);
         SumXConsoleApp.run_program(self, self.editor.text, name=name);

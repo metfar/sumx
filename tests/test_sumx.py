@@ -97,6 +97,57 @@ class EditorMenuTests(unittest.TestCase):
 
 
 
+
+    def test_editor_read_activates_command_and_overwrites_default_picture_value(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "read.prg";
+            path.write_text('answer = "N"\n@ 3, 2 GET answer WIDTH 1 PICTURE "@! A"\nREAD\nPRINT "Respuesta: " + answer\n', encoding="utf-8");
+            app = SumXEditorApp(path);
+            try:
+                self.assertTrue(app.run_buffer());
+                self.assertTrue(app.command.read_active);
+                self.assertIs(app.workspace.active_window, app.command_window);
+                self.assertIs(app.app.focus.current, app.command);
+                self.assertTrue(app.app.dispatch(KeyEvent("y", text="y")));
+                self.assertEqual(app.command.read_values()["answer"], "Y");
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.ENTER)));
+                self.assertFalse(app.program_active);
+                self.assertIn("Respuesta: Y", app.output_view.text);
+            finally:
+                app.interpreter.runtime.db.close();
+
+    def test_editor_named_window_read_accepts_input_and_closes_cleanly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "window.prg";
+            path.write_text(
+                'answer = "N"\n'
+                'DEFINE WINDOW wDialogo FROM 4, 10 TO 12, 55 TITLE " Confirmación " SHADOW PANEL COLOR SCHEME 5\n'
+                'ACTIVATE WINDOW wDialogo\n'
+                '@ 1, 2 PRINT "¿Desea continuar?"\n'
+                '@ 3, 2 GET answer WIDTH 1 PICTURE "@! A"\n'
+                'READ\n'
+                'DEACTIVATE WINDOW wDialogo\n'
+                'RELEASE WINDOW wDialogo\n'
+                'PRINT "Respuesta: " + answer\n',
+                encoding="utf-8",
+            );
+            app = SumXEditorApp(path);
+            try:
+                self.assertTrue(app.run_buffer());
+                child = app._window_command("wDialogo");
+                self.assertIsNotNone(child);
+                self.assertIsNone(child.content_style);
+                self.assertTrue(child.read_active);
+                self.assertEqual(app.app.modal_depth, 1);
+                self.assertTrue(app.app.dispatch(KeyEvent("s", text="s")));
+                self.assertEqual(child.read_values()["answer"], "S");
+                self.assertTrue(app.app.dispatch(KeyEvent(Key.ENTER)));
+                self.assertEqual(app.app.modal_depth, 0);
+                self.assertFalse(app.program_active);
+                self.assertIn("Respuesta: S", app.output_view.text);
+            finally:
+                app.interpreter.runtime.db.close();
+
 class ProgramRuntimeTests(unittest.TestCase):
     def test_program_runtime_has_no_assistant_shell(self):
         app = SumXProgramApp();
