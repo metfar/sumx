@@ -1477,3 +1477,8 @@ RETURN cValor $ "SN"
         exec(compile(generated, "valid.py", "exec"), namespace, namespace);
     except SystemExit as exc:
         assert exc.code == 0;
+
+
+def test_sumide_xbase_profile_uses_sumx_syntax_lexer():
+    from sumide.profiles import get_profile;
+    assert get_profile("xbase").syntax == "sumx";

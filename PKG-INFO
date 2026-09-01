@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: sumx
-Version: 0.2.7
+Version: 0.2.8
 Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
 Author-email: William Martinez Bas <metfar@gmail.com>
 License: GPL-2.0-or-later
@@ -12,7 +12,7 @@ Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: sumtui>=0.7.7
-Requires-Dist: sumide>=0.2.5
+Requires-Dist: sumide>=0.2.6
 Requires-Dist: rich>=13.0
 Dynamic: license-file
 

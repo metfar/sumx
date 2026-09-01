@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.8 - 2026-09-01
+
+- Requires sumIDE 0.2.6 so the `sumx` IDE launcher uses the dedicated sumX syntax lexer rather than generic FoxPro highlighting.
+- Fixes `#` comment highlighting in the IDE: the complete comment line is styled as a comment, without highlighting `THEN`, `AND`, or other tokens inside it.
+
 ## 0.2.7 - 2026-09-01
 
 - Added classic GET validation clauses: `VALID expression` evaluates the candidate value before READ can leave the field, and `ERROR expression` supplies the validation message while focus remains on the GET. The xBase membership operator `$` is accepted in expressions, so `VALID answer $ "SN"` works directly.
