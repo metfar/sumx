@@ -59,6 +59,7 @@ class SumXEditorApp(ScriptIDE, SumXConsoleApp):
         self.command.on_submit = self._submit_xbase;
         self.path = Path(self.document.path).expanduser().resolve() if self.document.path is not None else Path("Untitled.prg");
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);
+        self.interpreter.runtime.set_messagebox_handler(self._runtime_messagebox);
         self.output_view.set_text("Ready. F5 runs the current xBase buffer.");
         self._update_status("xBase IDE");
 

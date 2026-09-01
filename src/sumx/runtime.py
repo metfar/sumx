@@ -42,6 +42,7 @@ class Runtime:
         self.windows = {};
         self.active_window = None;
         self._screen_size_provider = None;
+        self._messagebox_handler = None;
         self.set_debug_level(debug_level);
         self.db = SumXDatabase(database, max_areas=max_areas);
 
@@ -95,6 +96,15 @@ class Runtime:
     def set_confirm(self, enabled):
         self.confirm = bool(enabled);
         return self.confirm;
+
+    def set_messagebox_handler(self, handler):
+        self._messagebox_handler = handler if callable(handler) else None;
+        return self._messagebox_handler;
+
+    def messagebox(self, text, flags=0, title="Message"):
+        if self._messagebox_handler is not None:
+            return self._messagebox_handler(str(text), int(flags or 0), str(title or "Message"));
+        return 1;
 
     def set_screen_size_provider(self, provider):
         self._screen_size_provider = provider if callable(provider) else None;

@@ -46,8 +46,22 @@ class GeneratedProgram:
                 pass;
         self.console = Console();
         self.diagnostics = Console(stderr=True);
+        self.interpreter.runtime.set_messagebox_handler(self._messagebox);
         self.stopped = False;
         self.exit_code = 0;
+
+    def _messagebox(self, text, flags=0, title="Message"):
+        self.diagnostics.print("{}: {}".format(str(title or "Message"), str(text)));
+        return 1;
+
+    def define_function(self, name, params, body, source_line=None):
+        key = str(name).casefold();
+        self.interpreter.user_functions[key] = {
+            "name": str(name),
+            "params": tuple(str(item) for item in params),
+            "body": [str(item) for item in body],
+        };
+        return True;
 
     def _handle(self, result):
         queue = [result];
@@ -102,8 +116,15 @@ class GeneratedProgram:
             if isinstance(item, ReadRequest):
                 values = {};
                 for field in item.fields:
-                    entered = input("{} [{}]: ".format(field.target, field.value.rstrip()));
-                    values[field.target] = entered if entered != "" else field.value;
+                    while True:
+                        entered = input("{} [{}]: ".format(field.target, field.value.rstrip()));
+                        candidate = entered if entered != "" else field.value;
+                        valid, message = self.interpreter.validate_get_field(field, candidate);
+                        if valid:
+                            values[field.target] = candidate;
+                            break;
+                        if message:
+                            self.diagnostics.print(message, style="bold red");
                 self.interpreter.apply_read_values(item.fields, values);
                 if item.remaining:
                     continuation = self.interpreter.execute_remaining(item.remaining, interactive=False);

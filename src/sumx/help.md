@@ -54,6 +54,47 @@ PRINT "This is not printed"
 
 DO
 
+### FUNCTION
+
+Defines a reusable xBase function or procedure. Functions may be called from expressions, including a GET `VALID` clause.
+
+#### Syntax
+
+```text
+FUNCTION name
+    PARAMETER parameter [, parameter ...]
+    statements
+    RETURN expression
+[ENDFUNC]
+
+FUNCTION name(parameter [, parameter ...])
+    statements
+    RETURN expression
+[ENDFUNC]
+```
+
+#### Notes
+
+- `PARAMETER` and `PARAMETERS` are accepted.
+- `RETURN expression` returns a value to the calling expression; bare `RETURN` returns without a value.
+- A function placed at the end of a program may end at EOF, matching the classic xBase source-file style; explicit `ENDFUNC` / `ENDPROCEDURE` is also accepted.
+- Interactive requests such as READ are not allowed while a function is being evaluated as an expression.
+
+#### Functional example
+
+```xbase
+FUNCTION ValidarRespuesta
+    PARAMETER cValor
+    IF NOT (cValor $ "SN")
+        RETURN FALSE
+    ENDIF
+    RETURN TRUE
+```
+
+#### See also
+
+RETURN, GET, MESSAGEBOX
+
 ### IF
 
 Conditionally executes one statement or a block; THEN is optional for block form.
@@ -352,6 +393,8 @@ GET variable PICTURE picture
 
 - A/N/X/!/9/#/Y/L are editable mask positions.
 - @!, @Z, @C, @X, @(, @E, @B, @R, @K, @G and @T are supported modifiers.
+- `@M value1,value2,...` defines an allowed-choice mask. For example, `PICTURE "@M S,N"` accepts only S or N and canonicalizes matching lowercase keystrokes to the listed value.
+- A pure transform such as `PICTURE "@!"` uppercases input without imposing a zero-length logical mask.
 
 #### Functional example
 
@@ -359,6 +402,8 @@ GET variable PICTURE picture
 nValue = 1250.50
 ? nValue PICTURE "$999,999.99"
 ? "usuario12" PICTURE "@! NNNNNNNN"
+answer = "N"
+@ 1,1 GET answer PICTURE "@M S,N"
 ```
 
 #### See also
@@ -464,8 +509,8 @@ Defines an editable field at an absolute screen coordinate.
 #### Syntax
 
 ```text
-@ row,column GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]
-@ row,column SAY expression GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]
+@ row,column GET variable [WIDTH n] [HEIGHT n] [PICTURE picture] [VALID expression] [ERROR expression]
+@ row,column SAY expression GET variable [WIDTH n] [HEIGHT n] [PICTURE picture] [VALID expression] [ERROR expression]
 ```
 
 #### Notes
@@ -474,22 +519,24 @@ Defines an editable field at an absolute screen coordinate.
 - HEIGHT defaults to 1; HEIGHT > 1 is a multiline textarea-like field.
 - READ starts in classic overwrite mode; typing into a full bounded field replaces the character under the caret instead of rejecting the keystroke.
 - With SET CONFIRM ON, further typing at the logical end repeatedly overwrites the final logical character; with SET CONFIRM OFF, filling the logical field advances automatically.
-- PICTURE validation is applied while typing, including transformations such as `@!` uppercase.
-- Tab moves to the next GET; Tab on the last GET accepts READ.
+- PICTURE validation is applied while typing, including transformations such as `@!` uppercase and choice masks such as `@M S,N`.
+- `VALID expression` is evaluated against the candidate value before READ can leave the field. The candidate is temporarily visible through the GET variable, so `VALID answer $ "SN"` works directly.
+- `ERROR expression` supplies the message shown when VALID returns false. Without ERROR, a validation function may display its own MESSAGEBOX and return false to keep focus on the GET.
+- Tab moves to the next GET only after validation succeeds; Tab on a valid last GET accepts READ.
 
 #### Functional example
 
 ```xbase
-notes = "Edit this text"
-@ 2,2 SAY "Notes:"
-@ 3,2 GET notes WIDTH 30 HEIGHT 4
+answer = "N"
+@ 2,2 SAY "Continue?"
+@ 3,2 GET answer PICTURE "@!" VALID answer $ "SN" ERROR "Use S or N"
 READ
-PRINT notes
+PRINT answer
 ```
 
 #### See also
 
-READ, PICTURE
+READ, PICTURE, FUNCTION, MESSAGEBOX
 
 ### READ
 
@@ -644,6 +691,42 @@ WCOLS
 #### Aliases
 
 SCREENROWS
+
+### MESSAGEBOX
+
+Displays a modal message from an xBase expression. It is especially useful inside reusable GET validation functions.
+
+#### Syntax
+
+```text
+MESSAGEBOX(text [, flags [, title]])
+```
+
+#### Notes
+
+- `flags` accepts the traditional numeric Fox-style value. Icon/severity values use the active sumTUI palette: `16` stop/error (red), `32` question (blue), `48` exclamation/warning (yellow), and `64` information (cyan-like).
+- In the interactive sumIDE/sumX TUI runtime the message is shown as a modal dialog. The current implementation returns `1` immediately; use it as an alert rather than depending on a button-result code.
+- In readable compiled/plain execution, MESSAGEBOX has a textual diagnostic fallback.
+
+#### Functional example
+
+```xbase
+FUNCTION ValidarRespuesta
+    PARAMETER cValor
+    IF NOT (cValor $ "SN")
+        = MESSAGEBOX("¡Atención! Solo se permite 'S' o 'N'.", 48, " Error ")
+        RETURN FALSE
+    ENDIF
+    RETURN TRUE
+
+answer = "N"
+@ 1,1 GET answer PICTURE "@!" VALID ValidarRespuesta(answer)
+READ
+```
+
+#### See also
+
+GET, FUNCTION, RETURN
 
 ### SHELL ESCAPE
 

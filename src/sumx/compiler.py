@@ -45,6 +45,48 @@ def check_source(source, line_continuation="BACKSLASH", ampersand_comment=False)
     return statements;
 
 
+
+
+def _function_header(statement):
+    match = re.match(r"(?is)^(?:FUNCTION|PROCEDURE)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\((.*?)\))?$", str(statement).strip());
+    if match is None:
+        return None;
+    params = tuple(item.strip() for item in str(match.group(2) or "").split(",") if item.strip() != "");
+    return match.group(1), params;
+
+
+def _extract_functions(items):
+    main = [];
+    functions = [];
+    source = list(items or []);
+    index = 0;
+    while index < len(source):
+        statement, line_number = source[index];
+        header = _function_header(statement);
+        if header is None:
+            main.append(source[index]);
+            index += 1;
+            continue;
+        name, params = header;
+        body = [];
+        index += 1;
+        while index < len(source):
+            current, current_line = source[index];
+            if _function_header(current) is not None:
+                break;
+            if str(current).strip().upper() in ("ENDFUNC", "ENDFUNCTION", "ENDPROC", "ENDPROCEDURE"):
+                index += 1;
+                break;
+            body.append((current, current_line));
+            index += 1;
+        if body:
+            parameter_match = re.match(r"(?is)^PARAMETERS?\s+(.+)$", str(body[0][0]).strip());
+            if parameter_match is not None:
+                params = tuple(item.strip() for item in parameter_match.group(1).split(",") if item.strip() != "");
+                body = body[1:];
+        functions.append((str(name), tuple(params), [str(item[0]) for item in body], int(line_number)));
+    return main, functions;
+
 def _statement_locations(source, statements):
     source = str(source);
     cursor = 0;
@@ -190,6 +232,7 @@ def _emit_block(items, lines, start=0, indent=0, stop_tokens=None):
 def compile_source(source, source_name="<program>", line_continuation="BACKSLASH", ampersand_comment=False, theme="XBASE"):
     statements = check_source(source, line_continuation=line_continuation, ampersand_comment=ampersand_comment);
     items = _statement_locations(source, statements);
+    items, functions = _extract_functions(items);
     selected_theme = theme if theme in THEMES else "XBASE";
     if selected_theme in BUILTIN_THEME_NAMES:
         theme_name = selected_theme;
@@ -214,6 +257,10 @@ def compile_source(source, source_name="<program>", line_continuation="BACKSLASH
         "program.interpreter.runtime.set_ampersand_comment({});".format("True" if ampersand_comment else "False"),
         "",
     ];
+    for name, params, body, line_number in functions:
+        lines.append("program.define_function({!r}, {!r}, {!r}, source_line={});".format(name, params, body, line_number));
+    if functions:
+        lines.append("");
     _emit_block(items, lines, start=0, indent=0);
     lines.append("");
     lines.append("raise SystemExit(program.finish());");

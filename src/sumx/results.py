@@ -78,6 +78,8 @@ class GetField:
     max_length: int = None;
     overflow: bool = False;
     window: str = None;
+    valid: str = "";
+    error: str = "";
 
 
 @dataclass
@@ -129,7 +131,7 @@ class QuitResult:
 
 @dataclass
 class ReturnResult:
-    pass;
+    value: object = None;
 
 
 @dataclass

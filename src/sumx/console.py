@@ -28,7 +28,7 @@ from pathlib import Path;
 import subprocess;
 import time;
 
-from sumtui import Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, ListViewPane, MarkdownView, MarkdownViewPane, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
+from sumtui import message_color_scheme, Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, ListViewPane, MarkdownView, MarkdownViewPane, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
 from sumtui.clipboard import clipboard;
 
 from . import __version__;
@@ -74,6 +74,7 @@ class SumXConsoleApp:
         self.command = CommandWindow(prompt=". ", on_submit=self._submit);
         self.status = StatusBar(self.interpreter.runtime.db.status());
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);
+        self.interpreter.runtime.set_messagebox_handler(self._runtime_messagebox);
         self.continuation = [];
         self._program_statements = [];
         self._program_results = [];
@@ -104,6 +105,36 @@ class SumXConsoleApp:
         self.desktop = MenuDesktop(self.menu, body);
         self.app.set_root(self.desktop);
         self.app.focus.set(self.command);
+
+    def _runtime_messagebox(self, text, flags=0, title="Message"):
+        previous_focus = self.app.focus.current;
+        numeric_flags = int(flags or 0);
+        low_flags = numeric_flags & 0x0F;
+        icon_flags = numeric_flags & 0xF0;
+        kind = {0x10: "error", 0x20: "question", 0x30: "warning", 0x40: "info"}.get(icon_flags, "info");
+        color_scheme = message_color_scheme(self.app.theme, kind);
+        buttons = [];
+        state = {"value": 1};
+        def close(value=1):
+            state["value"] = int(value);
+            self.app.pop_modal();
+            if previous_focus is not None:
+                self.app.focus.set(previous_focus);
+            self.app.invalidate();
+            return True;
+        if low_flags == 4:
+            buttons = [Button("Yes", on_press=lambda: close(6), default=True), Button("No", on_press=lambda: close(7))];
+        elif low_flags == 1:
+            buttons = [Button("OK", on_press=lambda: close(1), default=True), Button("Cancel", on_press=lambda: close(2))];
+        else:
+            buttons = [Button("OK", on_press=lambda: close(1), default=True)];
+        message_style = "message_{}".format(kind);
+        body = VBox(Label(str(text), style=message_style), HBox(*buttons, ratios=[1 for _item in buttons]), sizes=[None, None]);
+        dialog = Dialog(body, title=str(title or "Message"), width=max(36, min(76, len(str(text)) + 8)), height=9, on_cancel=lambda: close(2), shadow=True, color_scheme=color_scheme, title_style=message_style);
+        self.app.push_modal(dialog);
+        self.app.focus.set(buttons[0]);
+        self.app.invalidate();
+        return 1;
 
     def _theme_menu(self):
         return Menu("Theme", [
@@ -290,6 +321,7 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             line_continuation=self.interpreter.runtime.line_continuation,
             ampersand_comment=self.interpreter.runtime.ampersand_comment,
         ));
+        self._program_statements = self.interpreter.prepare_statements(self._program_statements);
         self._program_results = [];
         self._program_name = str(name);
         self._program_active = True;
@@ -678,6 +710,8 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 "picture": field.picture,
                 "overflow": field.overflow,
                 "char_filter": char_filter,
+                "validator": (lambda value, source=field: self.interpreter.validate_get_field(source, value)),
+                "validation_error": str(field.error or ""),
             });
 
         def accept(values, _widget):
@@ -702,10 +736,17 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             if after_done is not None:
                 after_done();
 
+        def validation_error(_field, message, _widget):
+            if str(message or ""):
+                self._runtime_messagebox(str(message), 48, "Validation");
+            self.app.invalidate();
+            return True;
+
         if target_command is self.command and hasattr(self, "workspace") and hasattr(self, "command_window"):
             self.workspace.activate(self.command_window);
         if not target_command.begin_read(
             fields, on_accept=accept, on_cancel=cancel, confirm=self.interpreter.runtime.confirm,
+            on_validation_error=validation_error,
         ):
             self.command.write_error("READ: no fields");
         self.app.focus.set(target_command);

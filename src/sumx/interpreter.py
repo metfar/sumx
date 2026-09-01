@@ -30,7 +30,7 @@ from pathlib import Path;
 from .database import split_top_level;
 from .expressions import ExpressionEvaluator;
 from .helpdb import find_topic, index_markdown;
-from .picture import parse_picture, picture_capacity, picture_display_width, strip_picture_literals, transform;
+from .picture import parse_picture, picture_capacity, picture_choices, picture_display_width, strip_picture_literals, transform;
 from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, FormRequest, GetField, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ReturnResult, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
 from .runtime import Runtime;
 from .sql import parse_sql_source;
@@ -155,6 +155,116 @@ class Interpreter:
         self.expr = ExpressionEvaluator(self.runtime);
         self.pending_gets = [];
         self.source_stack = [];
+        self.user_functions = {};
+        self.runtime._user_function_handler = self._call_user_function;
+
+    @staticmethod
+    def _function_header(statement):
+        match = re.match(r"(?is)^(?:FUNCTION|PROCEDURE)\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s*\((.*?)\))?$", str(statement).strip());
+        if match is None:
+            return None;
+        params = tuple(item.strip() for item in split_top_level(match.group(2) or "", ",") if item.strip() != "");
+        return match.group(1), params;
+
+    def prepare_statements(self, statements):
+        source = list(statements or []);
+        main = [];
+        index = 0;
+        while index < len(source):
+            header = self._function_header(source[index]);
+            if header is None:
+                main.append(source[index]);
+                index += 1;
+                continue;
+            name, params = header;
+            body = [];
+            index += 1;
+            while index < len(source):
+                current = str(source[index]).strip();
+                if self._function_header(current) is not None:
+                    break;
+                if current.upper() in ("ENDFUNC", "ENDFUNCTION", "ENDPROC", "ENDPROCEDURE"):
+                    index += 1;
+                    break;
+                body.append(source[index]);
+                index += 1;
+            if body:
+                parameter_match = re.match(r"(?is)^PARAMETERS?\s+(.+)$", str(body[0]).strip());
+                if parameter_match is not None:
+                    params = tuple(item.strip() for item in split_top_level(parameter_match.group(1), ",") if item.strip() != "");
+                    body = body[1:];
+            self.user_functions[str(name).casefold()] = {"name": str(name), "params": tuple(params), "body": list(body)};
+        return main;
+
+    def _execute_function_body(self, statements):
+        work = list(statements or []);
+        index = 0;
+        while index < len(work):
+            statement = str(work[index]).strip();
+            parsed_if = self._parse_if_statement(statement);
+            if parsed_if is not None:
+                condition, tail, single_line = parsed_if;
+                if single_line:
+                    if bool(self.evaluate(condition)):
+                        work[index] = tail;
+                    else:
+                        del work[index];
+                    continue;
+                else_index, endif_index = self._find_if_block(work, index);
+                selected = bool(self.evaluate(condition));
+                if selected:
+                    branch_end = else_index if else_index is not None else endif_index;
+                    branch = work[index + 1:branch_end];
+                else:
+                    branch = work[else_index + 1:endif_index] if else_index is not None else [];
+                work[index:endif_index + 1] = branch;
+                continue;
+            if statement.upper() in ("ELSE", "ENDIF"):
+                raise SumXError("Unexpected {}".format(statement.upper()));
+            return_match = re.match(r"(?is)^RETURN(?:\s+(.+))?$", statement);
+            if return_match is not None:
+                expression = (return_match.group(1) or "").strip();
+                return True, (self.evaluate(expression) if expression else None);
+            if re.match(r"(?is)^PARAMETERS?\s+", statement):
+                index += 1;
+                continue;
+            result = self._execute_one(statement, interactive=False);
+            if isinstance(result, ReturnResult):
+                return True, result.value;
+            if isinstance(result, (ReadRequest, InputRequest, AppendRequest, FormRequest, BrowseRequest, HelpRequest, WindowRequest)):
+                raise SumXError("Interactive operation is not allowed inside expression function {}".format(statement));
+            index += 1;
+        return False, None;
+
+    def _call_user_function(self, name, args):
+        key = str(name).casefold();
+        if key not in self.user_functions:
+            raise KeyError(name);
+        function = self.user_functions[key];
+        params = tuple(function["params"]);
+        if len(args) != len(params):
+            raise SumXError("{} expects {} argument(s), got {}".format(function["name"], len(params), len(args)));
+        saved = [];
+        for parameter, value in zip(params, args):
+            existing = self.runtime._find_variable_name(parameter);
+            if existing is None:
+                saved.append((parameter, None, None));
+            else:
+                saved.append((parameter, existing, self.runtime.variables[existing]));
+            self.runtime.set_value(parameter, value);
+        try:
+            _returned, value = self._execute_function_body(function["body"]);
+            return value;
+        finally:
+            for parameter, existing, value in reversed(saved):
+                current = self.runtime._find_variable_name(parameter);
+                if existing is None:
+                    if current is not None:
+                        del self.runtime.variables[current];
+                else:
+                    if current is not None and current != existing:
+                        del self.runtime.variables[current];
+                    self.runtime.variables[existing] = value;
 
     def evaluate(self, expression):
         return self.expr.evaluate(expression);
@@ -203,6 +313,7 @@ class Interpreter:
             line_continuation=self.runtime.line_continuation,
             ampersand_comment=self.runtime.ampersand_comment,
         ));
+        statements = self.prepare_statements(statements);
         results = [];
         index = 0;
         while index < len(statements):
@@ -413,7 +524,7 @@ class Interpreter:
 
     def _parse_get_clause(self, text):
         source = str(text).strip();
-        positions = self._clause_positions(source, ("WIDTH", "HEIGHT", "PICTURE"));
+        positions = self._clause_positions(source, ("WIDTH", "HEIGHT", "PICTURE", "VALID", "ERROR"));
         first = positions[0][0] if positions else len(source);
         target = source[:first].strip();
         if not target:
@@ -430,6 +541,8 @@ class Interpreter:
         width = None;
         height = 1;
         picture = "";
+        valid = "";
+        error = "";
         if "WIDTH" in options:
             width = self._coord(self.evaluate(options["WIDTH"]), "GET WIDTH");
             if width <= 0:
@@ -442,7 +555,13 @@ class Interpreter:
             picture = self.evaluate(options["PICTURE"]);
             if not isinstance(picture, str):
                 raise SumXError("GET PICTURE must evaluate to a string");
-        return target, width, height, picture, bool(positions);
+        if "VALID" in options:
+            valid = str(options["VALID"]).strip();
+        if "ERROR" in options:
+            error_value = self.evaluate(options["ERROR"]);
+            error = str(error_value);
+        layout_options = any(key in options for key in ("WIDTH", "HEIGHT", "PICTURE"));
+        return target, width, height, picture, valid, error, bool(layout_options);
 
     def _format_expression(self, expression, picture_expression=None):
         value = self.evaluate(expression);
@@ -475,7 +594,7 @@ class Interpreter:
                 return candidate.resolve();
         raise SumXError("Program not found: {}".format(raw));
 
-    def _make_get_field(self, target, row, column, width=None, height=1, picture="", explicit_options=False):
+    def _make_get_field(self, target, row, column, width=None, height=1, picture="", valid="", error="", explicit_options=False):
         target = str(target).strip();
         if not target:
             raise SumXError("GET requires a variable or assignable target");
@@ -489,7 +608,13 @@ class Interpreter:
         fixed = isinstance(value, str) and not explicit_options and not picture;
         max_length = None;
         if picture:
-            max_length = None if self.runtime.field_wrap_overflow else picture_display_width(picture);
+            capacity = picture_capacity(picture);
+            if self.runtime.field_wrap_overflow:
+                max_length = None;
+            elif capacity > 0:
+                max_length = picture_display_width(picture);
+            elif isinstance(value, str):
+                max_length = max(1, len(value));
             shown = transform(value, picture, overflow=self.runtime.field_wrap_overflow);
         elif fixed:
             max_length = max(1, len(value));
@@ -506,6 +631,7 @@ class Interpreter:
             target, row, column, max(1, int(width)), str(shown), original=value, fixed=fixed,
             height=max(1, int(height)), picture=str(picture or ""), max_length=max_length,
             overflow=bool(self.runtime.field_wrap_overflow), window=self.runtime.active_window,
+            valid=str(valid or ""), error=str(error or ""),
         );
         self.pending_gets.append(field);
         return field;
@@ -524,61 +650,88 @@ class Interpreter:
             raw = "-" + raw;
         return raw;
 
+    def _coerce_read_value(self, field, text):
+        text = str(text);
+        original = field.original;
+        if field.picture:
+            spec = parse_picture(field.picture);
+            if isinstance(original, str):
+                value = strip_picture_literals(text, spec) if spec.remove_literals else text;
+                if spec.choices:
+                    match = next((choice for choice in spec.choices if choice.casefold() == value.strip().casefold()), None);
+                    if match is not None:
+                        value = match;
+                if spec.uppercase:
+                    value = value.upper();
+                if field.max_length is not None and not field.overflow:
+                    value = value[:field.max_length];
+                return value;
+            if isinstance(original, bool):
+                key = strip_picture_literals(text, spec).strip().upper();
+                if key in ("T", "TRUE", ".T.", "Y", "YES", "S", "SI", "ON", "1", "V"):
+                    return True;
+                if key in ("F", "FALSE", ".F.", "N", "NO", "OFF", "0"):
+                    return False;
+                raise SumXError("Invalid logical value for {}: {}".format(field.target, text));
+            if isinstance(original, int) and not isinstance(original, bool):
+                return int(Decimal(self._numeric_picture_text(text)));
+            if isinstance(original, float):
+                return float(self._numeric_picture_text(text));
+            if isinstance(original, Decimal):
+                return Decimal(self._numeric_picture_text(text));
+            return strip_picture_literals(text, spec) if spec.remove_literals else text;
+        if isinstance(original, str):
+            if field.fixed:
+                limit = field.max_length if field.max_length is not None else field.width;
+                return text[:limit].ljust(limit);
+            return text.rstrip() if field.height <= 1 else text;
+        if isinstance(original, bool):
+            key = text.strip().upper();
+            if key in ("T", "TRUE", ".T.", "Y", "YES", "ON", "1"):
+                return True;
+            if key in ("F", "FALSE", ".F.", "N", "NO", "OFF", "0"):
+                return False;
+            raise SumXError("Invalid logical value for {}: {}".format(field.target, text));
+        if isinstance(original, int) and not isinstance(original, bool):
+            return int(text.strip());
+        if isinstance(original, float):
+            return float(text.strip());
+        if isinstance(original, Decimal):
+            return Decimal(text.strip());
+        if original is None:
+            return text.rstrip();
+        return text.rstrip();
+
+    def validate_get_field(self, field, text):
+        try:
+            candidate = self._coerce_read_value(field, text);
+        except Exception as exc:
+            return False, field.error or str(exc);
+        choices = picture_choices(field.picture) if field.picture else ();
+        if choices:
+            probe = str(candidate).strip().casefold();
+            if probe not in tuple(choice.casefold() for choice in choices):
+                return False, field.error or "Expected one of: {}".format(", ".join(choices));
+        if not str(field.valid or "").strip():
+            return True, "";
+        try:
+            previous = self.evaluate(field.target);
+            self._assign_target(field.target, candidate);
+            try:
+                valid = bool(self.evaluate(field.valid));
+            finally:
+                self._assign_target(field.target, previous);
+        except Exception as exc:
+            return False, field.error or "VALID error: {}".format(exc);
+        return valid, ("" if valid else str(field.error or ""));
+
     def apply_read_values(self, fields, values):
         for field in fields:
             text = str(values.get(field.target, field.value));
-            original = field.original;
-            if field.picture:
-                spec = parse_picture(field.picture);
-                if isinstance(original, str):
-                    value = strip_picture_literals(text, spec) if spec.remove_literals else text;
-                    if spec.uppercase:
-                        value = value.upper();
-                    if field.max_length is not None and not field.overflow:
-                        value = value[:field.max_length];
-                elif isinstance(original, bool):
-                    key = strip_picture_literals(text, spec).strip().upper();
-                    if key in ("T", "TRUE", ".T.", "Y", "YES", "S", "SI", "ON", "1", "V"):
-                        value = True;
-                    elif key in ("F", "FALSE", ".F.", "N", "NO", "OFF", "0"):
-                        value = False;
-                    else:
-                        raise SumXError("Invalid logical value for {}: {}".format(field.target, text));
-                elif isinstance(original, int) and not isinstance(original, bool):
-                    value = int(Decimal(self._numeric_picture_text(text)));
-                elif isinstance(original, float):
-                    value = float(self._numeric_picture_text(text));
-                elif isinstance(original, Decimal):
-                    value = Decimal(self._numeric_picture_text(text));
-                else:
-                    value = strip_picture_literals(text, spec) if spec.remove_literals else text;
-                self._assign_target(field.target, value);
-                continue;
-            if isinstance(original, str):
-                if field.fixed:
-                    limit = field.max_length if field.max_length is not None else field.width;
-                    value = text[:limit].ljust(limit);
-                else:
-                    value = text.rstrip() if field.height <= 1 else text;
-            elif isinstance(original, bool):
-                key = text.strip().upper();
-                if key in ("T", "TRUE", ".T.", "Y", "YES", "ON", "1"):
-                    value = True;
-                elif key in ("F", "FALSE", ".F.", "N", "NO", "OFF", "0"):
-                    value = False;
-                else:
-                    raise SumXError("Invalid logical value for {}: {}".format(field.target, text));
-            elif isinstance(original, int) and not isinstance(original, bool):
-                value = int(text.strip());
-            elif isinstance(original, float):
-                value = float(text.strip());
-            elif isinstance(original, Decimal):
-                value = Decimal(text.strip());
-            elif original is None:
-                value = text.rstrip();
-            else:
-                value = text.rstrip();
-            self._assign_target(field.target, value);
+            valid, message = self.validate_get_field(field, text);
+            if not valid:
+                raise SumXError(message or "Validation failed for {}".format(field.target));
+            self._assign_target(field.target, self._coerce_read_value(field, text));
         return True;
 
     def apply_input_value(self, request, entered):
@@ -791,8 +944,14 @@ class Interpreter:
         upper = text.upper();
         if upper in ("QUIT", "EXIT"):
             return QuitResult();
-        if upper == "RETURN":
-            return ReturnResult();
+        return_match = re.match(r"(?is)^RETURN(?:\s+(.+))?$", text);
+        if return_match is not None:
+            expression = (return_match.group(1) or "").strip();
+            return ReturnResult(self.evaluate(expression) if expression else None);
+        eval_match = re.match(r"(?is)^=\s*(.+)$", text);
+        if eval_match is not None:
+            self.evaluate(eval_match.group(1));
+            return None;
         match = re.match(r"(?is)^HELP(?:\s+(.+))?$", text);
         if match:
             topic_name = (match.group(1) or "").strip();
@@ -846,10 +1005,10 @@ class Interpreter:
                 shown = self._format_expression(expression, picture_expression);
                 return ScreenWriteResult(row, column, shown, window=self.runtime.active_window);
             shown = display_value(self.evaluate(say_expression));
-            target, field_width, field_height, picture, explicit = self._parse_get_clause(get_clause);
+            target, field_width, field_height, picture, valid, error, explicit = self._parse_get_clause(get_clause);
             field = self._make_get_field(
                 target, row, column + len(shown) + 1, width=field_width, height=field_height,
-                picture=picture, explicit_options=explicit,
+                picture=picture, valid=valid, error=error, explicit_options=explicit,
             );
             return BatchResult([ScreenWriteResult(row, column, shown, window=self.runtime.active_window), ScreenGetResult(field)]);
 
@@ -857,8 +1016,8 @@ class Interpreter:
         if match:
             row = self._coord(self.evaluate(match.group(1)), "@ GET row");
             column = self._coord(self.evaluate(match.group(2)), "@ GET column");
-            target, field_width, field_height, picture, explicit = self._parse_get_clause(match.group(3));
-            return ScreenGetResult(self._make_get_field(target, row, column, width=field_width, height=field_height, picture=picture, explicit_options=explicit));
+            target, field_width, field_height, picture, valid, error, explicit = self._parse_get_clause(match.group(3));
+            return ScreenGetResult(self._make_get_field(target, row, column, width=field_width, height=field_height, picture=picture, valid=valid, error=error, explicit_options=explicit));
 
         if upper == "READ":
             fields = self.pending_gets;

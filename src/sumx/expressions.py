@@ -108,6 +108,7 @@ def normalize_expression(source, equality=False, ampersand_comment=False):
         text = re.sub(r"(?<![<>=!])~", " not ", text);
         text = re.sub(r"(?i)\bIN\b", " in ", text);
         text = re.sub(r"(?i)\bIS\b", " is ", text);
+        text = text.replace("$", " in ");
         text = text.replace("<>", "!=");
         if equality:
             text = re.sub(r"(?<![<>=!])=(?!=)", "==", text);
@@ -276,8 +277,15 @@ class ExpressionEvaluator:
             "WROWS": lambda: self.runtime.screen_size()[1],
             "SCREENCOLS": lambda: self.runtime.screen_size()[0],
             "SCREENROWS": lambda: self.runtime.screen_size()[1],
+            "MESSAGEBOX": lambda text, flags=0, title="Message": self.runtime.messagebox(text, flags, title),
         };
         if key not in funcs:
+            handler = getattr(self.runtime, "_user_function_handler", None);
+            if callable(handler):
+                try:
+                    return handler(name, args);
+                except KeyError:
+                    pass;
             raise ExpressionError("Unknown function {}".format(name));
         try:
             return funcs[key](*args);

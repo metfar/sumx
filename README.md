@@ -761,6 +761,8 @@ examples/conditionals.prg
 examples/logical_aliases.prg
 examples/legacy_continuation.prg
 examples/window.prg
+examples/validation.prg
+examples/validation_function.prg
 examples/python/conditionals_equivalent.py
 examples/python/generated_conditionals.py
 examples/bash/run_legacy.sh

@@ -9,7 +9,7 @@ DEFINE WINDOW wDialogo \
 
 ACTIVATE WINDOW wDialogo
 @ 1, 2 PRINT "¿Desea continuar?"
-@ 3, 2 GET answer WIDTH 1 PICTURE "@! A"
+@ 3, 2 GET answer WIDTH 1 PICTURE "@M S,N"
 READ
 DEACTIVATE WINDOW wDialogo
 RELEASE WINDOW wDialogo

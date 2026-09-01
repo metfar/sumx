@@ -37,6 +37,7 @@ class PictureSpec:
     source: str;
     functions: frozenset;
     mask: str;
+    choices: tuple = ();
 
     @property
     def uppercase(self):
@@ -55,7 +56,7 @@ class PictureSpec:
         return "K" in self.functions;
 
 
-_PICTURE_FUNCTIONS = frozenset("!ZCX(EBRKGT");
+_PICTURE_FUNCTIONS = frozenset("!ZCX(EBRKGTM");
 _EDITABLE = frozenset("ANX!9#YL");
 
 
@@ -63,23 +64,38 @@ def parse_picture(picture):
     source = str(picture or "").strip();
     rest = source;
     functions = [];
-    while rest.startswith("@"):
-        match = re.match(r"^@([!ZCX(EBRKGT])(?:\s+|$)", rest, flags=re.I);
+    choices = ();
+    while rest.startswith("@"): 
+        match = re.match(r"^@([!ZCX(EBRKGTM])(?:\s+|$)", rest, flags=re.I);
         if not match:
             break;
-        functions.append(match.group(1).upper());
+        function = match.group(1).upper();
+        functions.append(function);
         rest = rest[match.end():].lstrip();
-    return PictureSpec(source, frozenset(functions), rest);
+        if function == "M":
+            choices = tuple(item.strip() for item in rest.replace("|", ",").split(",") if item.strip() != "");
+            rest = "";
+            break;
+    return PictureSpec(source, frozenset(functions), rest, choices);
 
 
 def picture_capacity(picture):
     spec = picture if isinstance(picture, PictureSpec) else parse_picture(picture);
+    if spec.choices:
+        return max(1, max(len(item) for item in spec.choices));
     return sum(1 for char in spec.mask if char.upper() in _EDITABLE);
 
 
 def picture_display_width(picture):
     spec = picture if isinstance(picture, PictureSpec) else parse_picture(picture);
+    if spec.choices:
+        return picture_capacity(spec);
     return max(1, len(spec.mask));
+
+
+def picture_choices(picture):
+    spec = picture if isinstance(picture, PictureSpec) else parse_picture(picture);
+    return tuple(spec.choices);
 
 
 def _accepts(token, char):
@@ -109,8 +125,17 @@ def picture_input_char(picture, position, char, overflow=False):
     spec = picture if isinstance(picture, PictureSpec) else parse_picture(picture);
     if not char:
         return None;
+    if spec.choices:
+        index = max(0, int(position));
+        for choice in spec.choices:
+            if index < len(choice) and choice[index].casefold() == str(char)[0].casefold():
+                chosen = choice[index];
+                return chosen.upper() if spec.uppercase else chosen;
+        return None;
     data_tokens = [token for token in spec.mask if token.upper() in _EDITABLE];
     index = max(0, int(position));
+    if not data_tokens and not spec.mask:
+        return char.upper() if spec.uppercase else char;
     if index >= len(data_tokens):
         if not overflow:
             return None;
@@ -125,6 +150,8 @@ def picture_input_char(picture, position, char, overflow=False):
 
 def _format_character(value, spec, overflow=False):
     source = str(value);
+    if spec.choices:
+        return source.upper() if spec.uppercase else source;
     if spec.uppercase:
         source = source.upper();
     if not spec.mask:

@@ -1379,3 +1379,101 @@ class EditableHelpMarkdownTests(unittest.TestCase):
             app.app.pop_modal();
         finally:
             app.interpreter.runtime.db.close();
+
+
+class GetValidationTests(InterpreterTestCase):
+    @staticmethod
+    def _read_request(result):
+        if isinstance(result, ReadRequest):
+            return result;
+        if isinstance(result, BatchResult):
+            return next(item for item in result.results if isinstance(item, ReadRequest));
+        raise AssertionError("READ request not returned: {!r}".format(result));
+
+    def test_membership_operator_is_available_to_valid_clause(self):
+        self.x.execute('answer="N"');
+        self.assertTrue(self.x.evaluate('answer $ "SN"'));
+        self.x.execute('answer="X"');
+        self.assertFalse(self.x.evaluate('answer $ "SN"'));
+
+    def test_get_valid_error_keeps_validation_message(self):
+        request = self._read_request(self.x.execute('answer="N"\n@ 3,2 GET answer PICTURE "@!" VALID answer $ "SN" ERROR "Use S or N"\nREAD'));
+        field = request.fields[0];
+        self.assertEqual(field.max_length, 1);
+        self.assertEqual(self.x.validate_get_field(field, "X"), (False, "Use S or N"));
+        self.assertEqual(self.x.validate_get_field(field, "s"), (True, ""));
+
+    def test_picture_m_validates_choice_and_canonicalizes_input(self):
+        from sumx.picture import picture_capacity, picture_choices, picture_input_char;
+        self.assertEqual(picture_choices("@M S,N"), ("S", "N"));
+        self.assertEqual(picture_capacity("@M S,N"), 1);
+        self.assertEqual(picture_input_char("@M S,N", 0, "s"), "S");
+        self.assertIsNone(picture_input_char("@M S,N", 0, "X"));
+        request = self._read_request(self.x.execute('answer="N"\n@ 3,2 GET answer PICTURE "@M S,N"\nREAD'));
+        field = request.fields[0];
+        self.assertEqual(self.x.validate_get_field(field, "N"), (True, ""));
+        self.assertEqual(self.x.validate_get_field(field, "X"), (False, "Expected one of: S, N"));
+
+    def test_pure_uppercase_picture_keeps_existing_logical_length(self):
+        from sumx.picture import picture_input_char;
+        self.assertEqual(picture_input_char("@!", 0, "s"), "S");
+        request = self._read_request(self.x.execute('answer="N"\n@ 3,2 GET answer PICTURE "@!"\nREAD'));
+        self.assertEqual(request.fields[0].max_length, 1);
+
+    def test_valid_can_call_user_function_and_messagebox(self):
+        calls = [];
+        self.x.runtime.set_messagebox_handler(lambda text, flags=0, title="Message": calls.append((text, flags, title)) or 1);
+        source = '''answer = "N"
+@ 3,2 GET answer PICTURE "@!" VALID ValidarRespuesta(answer)
+READ
+FUNCTION ValidarRespuesta
+PARAMETER cValor
+IF NOT (cValor $ "SN")
+= MESSAGEBOX("Solo S o N", 48, "Error")
+RETURN FALSE
+ENDIF
+RETURN TRUE
+''';
+        request = self._read_request(self.x.execute(source));
+        field = request.fields[0];
+        self.assertEqual(self.x.validate_get_field(field, "X"), (False, ""));
+        self.assertEqual(calls, [("Solo S o N", 48, "Error")]);
+        self.assertEqual(self.x.validate_get_field(field, "S"), (True, ""));
+        self.assertEqual(calls, [("Solo S o N", 48, "Error")]);
+
+    def test_messagebox_expression_calls_runtime_handler(self):
+        calls = [];
+        self.x.runtime.set_messagebox_handler(lambda text, flags=0, title="Message": calls.append((text, flags, title)) or 1);
+        self.assertEqual(self.x.evaluate('MESSAGEBOX("Hello",48,"Warning")'), 1);
+        self.assertEqual(calls, [("Hello", 48, "Warning")]);
+
+    def test_console_messagebox_uses_flag_semantic_color(self):
+        app = SumXConsoleApp(theme="XBASE");
+        captured = [];
+        original_push = app.app.push_modal;
+        try:
+            app.app.push_modal = lambda dialog: captured.append(dialog) or dialog;
+            self.assertEqual(app._runtime_messagebox("Careful", 48, "Warning"), 1);
+            self.assertEqual(len(captured), 1);
+            self.assertEqual(captured[0].color_scheme, 14);
+            self.assertEqual(captured[0].title_style, "message_warning");
+        finally:
+            app.app.push_modal = original_push;
+            app.interpreter.runtime.db.close();
+
+
+def test_compiler_registers_user_validation_functions_before_main_program():
+    source = '''answer = "S"
+PRINT ValidarRespuesta(answer)
+FUNCTION ValidarRespuesta
+PARAMETER cValor
+RETURN cValor $ "SN"
+''';
+    generated = compile_source(source, source_name="valid.prg");
+    assert "program.define_function('ValidarRespuesta'" in generated;
+    assert "FUNCTION ValidarRespuesta" not in [line for line in generated.splitlines() if "program.statement" in line];
+    namespace = {"__name__": "compiled_validation_test"};
+    try:
+        exec(compile(generated, "valid.py", "exec"), namespace, namespace);
+    except SystemExit as exc:
+        assert exc.code == 0;

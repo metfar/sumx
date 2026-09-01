@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.7 - 2026-09-01
+
+- Added classic GET validation clauses: `VALID expression` evaluates the candidate value before READ can leave the field, and `ERROR expression` supplies the validation message while focus remains on the GET. The xBase membership operator `$` is accepted in expressions, so `VALID answer $ "SN"` works directly.
+- Added `PICTURE "@M S,N"` choice masks. The mask filters/canonicalizes allowed keystrokes and validates the complete value without confusing logical capacity with visible `WIDTH`. Pure transform masks such as `PICTURE "@!"` remain editable.
+- Added callable user `FUNCTION`/`PROCEDURE` validation with `PARAMETER(S)` and value-returning `RETURN expression`, sufficient for reusable `VALID ValidarRespuesta(answer)` routines.
+- Added `MESSAGEBOX(text [, flags [, title]])` to the xBase expression/runtime layer. In sumIDE/sumX console it opens the common modal dialog; generated/plain runtime has a textual fallback. This supports validation functions that display their own error and return `.F.`/`FALSE` to keep focus on the GET.
+- MESSAGEBOX icon/severity flags now carry semantic colors through the common sumTUI palette: `16` stop/error is red, `32` question is blue, `48` exclamation/warning is yellow and `64` information is cyan-like, with automatic contrasting title/text colors.
+- Kept validation integrated with `SET CONFIRM`: an invalid bounded field never auto-advances, even with CONFIRM OFF; it remains overwrite-editable until a valid value is entered.
+- Updated readable-Python compilation to register user functions before main execution and to reprompt compiled READ fields until validation succeeds.
+- Requires `sumTUI >= 0.7.7` and `sumIDE >= 0.2.5`. Regression suite: 115 tests passing.
+
 ## 0.2.6 - 2026-09-01
 
 - Fixed bounded GET editing at the logical end: with confirmation enabled, a one-character field receiving `Y`, `E`, `S` now remains active and ends with `S`; subsequent keys overwrite the final logical character instead of being ignored.
