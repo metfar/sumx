@@ -146,6 +146,7 @@ class SumXConsoleApp:
                 "show_tabs": bool(self.editor.show_tabs),
                 "show_line_endings": bool(self.editor.show_line_endings),
                 "show_control_chars": bool(self.editor.show_control_chars),
+                "tab_size": int(self.editor.tab_size),
             });
             data["editor"] = editor;
         return data;

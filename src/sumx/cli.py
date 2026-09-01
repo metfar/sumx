@@ -274,7 +274,7 @@ def main(argv=None):
             diagnostics.print("Opening a source file requires an interactive terminal. Use --run to execute it.", style="bold red");
             return 2;
         try:
-            return SumXEditorApp(args.file, interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
+            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme).run();
         except Exception as exc:
             diagnostics.print("Error: {}".format(exc), style="bold red");
             return 1;

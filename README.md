@@ -1,4 +1,6 @@
-# sumX 0.1.14
+# sumX 0.2.0
+
+**0.2.0 architecture note:** positional source editing now delegates to the independent `sumIDE` xBase profile. The interpreter, SQLite/database runtime, console, `--run`, `--check`, and readable `--compile` path remain in sumX.
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -7,9 +9,10 @@ sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The cu
 Install sumTUI first, then sumX:
 
 ```bash
-pip install ./sumtui-0.6.0.tar.gz
-pip install ./sumdiff-0.1.0a2.tar.gz
-pip install ./sumx-0.1.14.tar.gz
+pip install ./sumtui-0.7.0.tar.gz
+pip install ./sumide-0.2.0.tar.gz
+pip install ./sumdiff-0.2.0.tar.gz
+pip install ./sumx-0.2.0.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -94,48 +97,35 @@ The help system follows the same rule: every documented sumX language feature mu
 
 ## Source editor and navigable help
 
-Passing a source file positionally opens the sumTUI editor:
+Passing a source file positionally opens the common sumIDE xBase profile:
 
 ```bash
 sumx examples/hello.prg
 ```
 
-The editor is keyboard-first but now has the classic always-visible IDE menu bar:
+The editor is the shared `sumIDE 0.2.0` shell, with xBase execution supplied by sumX. Its top-level menus are:
 
 ```text
-File  Edit  Search  Run  Debug  Options  Window  Help
+File  Edit  Search  View  Options  Window  Run  Help
 ```
 
-**F9** opens/closes the menu and **F10** exits. Dropdowns are composited over the editor, so opening File/Edit/etc. does not resize the source viewport and the editing panel cannot cover the menu. `Alt+F/E/S/R/D/O/W/H` opens the corresponding top-level menu.
+**F9** opens/closes the menu and **F10** exits. **F2** opens Program Map, **F5/Ctrl+R** toggles cooperative Run/Stop, **F6/Ctrl+Tab** cycles Code → Output → Command, **F11/Alt+Enter** maximizes/restores, and **Ctrl+F6** compiles the current xBase buffer to readable Python. **Alt+I** opens Window; **Alt+W** is reserved for forward word/whitespace deletion. Selected-line `Tab`/`Shift+Tab`, whole-document tabs/spaces conversion, Vim modelines and the rest of the editing behavior come from the common sumTUI editor engine.
 
-File includes New/Open/Save/Save As; Edit exposes undo/redo and clipboard operations; Search includes Find/Find Next/Find Previous and Go to Line; Run exposes Check/Run/Compile to Python. **F2 opens Program Map preselected on the procedure/function/class that contains the current cursor line; F5/Ctrl+R toggles Run/Stop; F6/Ctrl+Tab cycles Code → Output → Command; F11/Alt+Enter maximizes/restores; Alt+M enters Move; Alt+Z enters Resize; Ctrl+F4 closes the active window; and Ctrl+F6 compiles to Python.** In Move/Resize mode, arrows adjust one cell, Shift+arrows five cells, Enter accepts, and Escape cancels. Mouse users can drag the lower-right window corner to resize. IDE execution advances cooperatively in bounded statement batches so keyboard/window events continue to be serviced while a program is running. The Debug menu is visible but its step/breakpoint entries remain deliberately disabled until the debugger runtime exists.
+The xBase backend remains stateful: direct commands in the Command window keep the same interpreter/database session, and F5 execution advances cooperatively so the TUI can continue servicing keyboard and modal xBase operations. Program output is routed to Output rather than mixed into direct-command history.
 
-The editor uses **Ctrl+S** Save, **Ctrl+O** Open, **Ctrl+F** Find, **Ctrl+X** Cut and **Ctrl+Q** Quit. Before New/Open/Quit or closing a modified Code window discards edits, it asks for **SAVE_AND_EXIT**, **FORGET_AND_EXIT**, or **CANCEL**. Output and Command expose visible scrolling, and Alt+F/E/S/R/D/O/W/H plus Alt+P make the IDE usable from Termux without function keys. Options controls the sumTUI theme, whitespace/control-character visualization, and persistent configuration.
+### Preferences and runtime configuration
 
-The IDE now uses the common sumTUI overlapping workspace. **Code**, **Output**, and **Command** are independent movable windows. Drag a window by its title border, use `Alt+Arrow` to move it from the keyboard, choose **Window** to activate/close/reopen a default window, or use F11 to temporarily give one window the full workspace. Program output is no longer mixed into the direct xBase Command history.
-
-
-### Themes and persistent configuration
-
-Both the ordinary sumX command environment and the source editor have **Options > Theme** and **Options > Save configuration**. The program-only `sumx --run` runtime has no assistant menu, but it still uses the saved theme for its dialogs, GET/READ fields, BROWSE and APPEND windows.
-
-Available themes come from sumTUI. With sumTUI 0.5.22 this includes `XBASE`, `Ralesk's MC`, `DBASE`, `FOXPRO`, `DOS`, `RAR`, `Dark`, `Light`, `C64`, `MSX` and `ZX`.
-
-The default configuration path is:
+Source-editor preferences are centralized in **sumIDE**. Use **Options → Preferences...** for indentation, whitespace/control-character display, modelines, templates, files, keybindings, terminal settings and language defaults. The source IDE persists those settings in:
 
 ```text
-~/.config/sumx/config.json
+~/.config/sumide/config.json
 ```
 
-When `XDG_CONFIG_HOME` is defined, sumX uses:
+or `$XDG_CONFIG_HOME/sumide/config.json`. The file is an implementation detail; normal configuration is through the Preferences dialog.
 
-```text
-$XDG_CONFIG_HOME/sumx/config.json
-```
+The **sumX runtime/command environment** deliberately keeps its own runtime configuration under `~/.config/sumx/config.json` (or `$XDG_CONFIG_HOME/sumx/config.json`). That configuration controls runtime themes and xBase-environment behavior used by bare `sumx` and `sumx --run`; it no longer owns generic editor preferences. `--config FILE` selects an alternate runtime configuration.
 
-The source editor saves its current theme together with the visibility state for spaces, tabs, line endings and control characters. Configuration is written only when **Save configuration** is selected.
-
-A command-line theme overrides the saved theme for that invocation without changing the file unless you explicitly save configuration from the interactive environment:
+A command-line theme can still override a session:
 
 ```bash
 sumx --theme "Ralesk's MC" program.prg
@@ -143,17 +133,7 @@ sumx --theme DOS --run program.prg
 sumx --list-themes
 ```
 
-A separate configuration file is useful for demonstrations and classes:
-
-```bash
-sumx --config ./classroom-sumx.json program.prg
-```
-
-This is environment configuration rather than sumX language syntax, so there is intentionally no `.prg` statement that silently rewrites the user's editor preferences.
-
-`Ctrl+F9` runs the current buffer and `Alt+F9` checks it. The buffer may be run without a save/reload cycle. Contextual F1 help and a separate Editor Keys help page are available from Help.
-
-Interactive `HELP`/F1 opens a topic browser with a topic list, scrollable Markdown, F3 search, and F5 **Run Example**. The help corpus grows with the implemented language; a feature is not considered documented until it has a functional example.
+Interactive `HELP` remains provided by the sumX runtime/help corpus. A language feature is not considered documented until it has a functional example.
 
 ## Program output and diagnostics
 

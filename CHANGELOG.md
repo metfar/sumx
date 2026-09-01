@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.2.0 - 2026-09-01
+
+- Started the post-split sumX release line: the xBase interpreter, SQLite/database runtime, command environment, `--run`, `--check` and readable Python `--compile` remain in sumX, while positional source editing delegates to the independent `sumIDE` xBase profile.
+- Retained `sumx.editor_app.SumXEditorApp` as the stateful xBase language backend attached to the common IDE shell. Cooperative F5 Run/Stop, direct commands, database state and readable-Python compilation remain in sumX, while editing/windows/preferences/templates stay in sumIDE.
+- Adopted the current `sumTUI 0.7.0` editor behavior and `sumIDE 0.2.0` preferences/templates/profile architecture. Positional source editing now uses sumIDE configuration; the separate sumX configuration remains for the command environment and program runtime.
+- The modern source rules remain unchanged: newline or `;` terminates statements, backslash is the default physical-line continuation, legacy semicolon continuation is optional, `#` is the default comment introducer, and symbolic logical aliases remain available.
+- Requires `sumTUI >= 0.7.0` and `sumIDE >= 0.2.0`.
+
+## 0.1.16
+
+- Moved the positional-file source editor to the independent `sumIDE` project. `sumx program.prg` now enters the common xBase IDE profile while `sumx --run`, `--compile`, `--check`, `-c/--command` and the console runtime remain owned by sumX.
+- Replaced `sumx.editor_app.SumXEditorApp` with a compatibility wrapper around `sumide.app.ScriptIDE`, preserving the import/API path while eliminating the duplicate IDE implementation.
+- Requires `sumTUI >= 0.6.2` and `sumIDE >= 0.1.0a1`.
+
+## 0.1.15
+
+- Adopted sumTUI 0.6.1 editor deletion and block-indentation behavior: Alt+W, Ctrl+Alt+W, Tab and Shift+Tab.
+- Reassigned the Window menu to **Alt+I** and disabled automatic menu mnemonics so **Alt+W** cannot be stolen from the editor at line boundaries.
+- Added configurable editor Tab width (2/4/8), persisted with the existing editor configuration.
+- Added whole-buffer Tabs -> N spaces and N spaces -> Tabs conversions under Edit.
+- Updated dependency to `sumtui>=0.6.1`. Regression suite remains 97 tests plus new menu-binding coverage.
+
 ## 0.1.14
 
 - Integrated the source editor with optional `sumdiff` through **File -> Compare with...**.

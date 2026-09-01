@@ -45,9 +45,12 @@ class EditorMenuTests(unittest.TestCase):
             path.write_text('PRINT "hello"\n', encoding="utf-8");
             app = SumXEditorApp(path);
             try:
-                self.assertEqual([menu.title for menu in app.menu.menus], ["File", "Edit", "Search", "Run", "Debug", "Options", "Window", "Help"]);
+                self.assertEqual([menu.title for menu in app.menu.menus], ["File", "Edit", "Search", "View", "Options", "Window", "Run", "Help"]);
                 self.assertIn("f9", app.app.bindings);
                 self.assertIn("f10", app.app.bindings);
+                self.assertIn("alt+i", app.app.bindings);
+                self.assertNotIn("alt+w", app.app.bindings);
+                self.assertFalse(app.menu.mnemonics);
                 self.assertTrue(app.open_menu(0));
                 self.assertIs(app.app.focus.current, app.menu);
                 self.assertTrue(app.menu.active);
