@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: sumx
-Version: 0.2.1
+Version: 0.2.4
 Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
 Author-email: William Martinez Bas <metfar@gmail.com>
 License: GPL-2.0-or-later
@@ -11,14 +11,14 @@ Classifier: Topic :: Database :: Database Engines/Servers
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: sumtui>=0.7.1
-Requires-Dist: sumide>=0.2.1
+Requires-Dist: sumtui>=0.7.3
+Requires-Dist: sumide>=0.2.3
 Requires-Dist: rich>=13.0
 Dynamic: license-file
 
-# sumX 0.2.1
+# sumX 0.2.2
 
-**0.2.1 architecture note:** positional source editing now delegates to the independent `sumIDE` xBase profile. The interpreter, SQLite/database runtime, console, `--run`, `--check`, and readable `--compile` path remain in sumX.
+**0.2.x architecture note:** positional source editing now delegates to the independent `sumIDE` xBase profile. The interpreter, SQLite/database runtime, console, `--run`, `--check`, and readable `--compile` path remain in sumX.
 
 sumX is an xBase-inspired interpreter built on Python, SQLite and sumTUI. The current line is interpreter-first: a dBASE/FoxPro-style command window, modern runtime values, work-area/channel semantics, and direct access to the real SQLite engine underneath.
 
@@ -28,9 +28,9 @@ Install sumTUI first, then sumX:
 
 ```bash
 pip install ./sumtui-0.7.0.tar.gz
-pip install ./sumide-0.2.1.tar.gz
-pip install ./sumdiff-0.2.1.tar.gz
-pip install ./sumx-0.2.1.tar.gz
+pip install ./sumide-0.2.2.tar.gz
+pip install ./sumdiff-0.2.0.tar.gz
+pip install ./sumx-0.2.2.tar.gz
 ```
 
 Run the sumTUI command window:
@@ -121,7 +121,7 @@ Passing a source file positionally opens the common sumIDE xBase profile:
 sumx examples/hello.prg
 ```
 
-The editor is the shared `sumIDE 0.2.1` shell, with xBase execution supplied by sumX. Its top-level menus are:
+The editor is the shared `sumIDE 0.2.2` shell, with xBase execution supplied by sumX. Its top-level menus are:
 
 ```text
 File  Edit  Search  View  Options  Window  Run  Help
@@ -616,7 +616,7 @@ BROWSE;       # read-only because the source is a view
 
 ## Interactive help and record navigation
 
-In the sumTUI command environment, `HELP` and F1 open a scrollable explorer dialog (`F11` maximizes/restores). The command window itself supports `PageUp` and `PageDown` for sumX output scrollback. `Shift+PageUp` / `Shift+PageDown` are aliases when the terminal forwards them; many Linux terminal emulators consume those shortcuts themselves.
+In both the common sumIDE xBase workspace and the classic sumTUI command environment, `HELP`/F1 open the sumX language help explorer (`F11` maximizes/restores). In sumIDE, Ctrl+F1 is reserved for generic editor help. The command window itself supports `PageUp` and `PageDown` for sumX output scrollback. `Shift+PageUp` / `Shift+PageDown` are aliases when the terminal forwards them; many Linux terminal emulators consume those shortcuts themselves.
 
 Table-backed `BROWSE` is editable and shows `First | Prev | Next | Last | Search | New* | Edit | Exit`. `APPEND` and record edit dialogs show `First | Prev | Next | Last | Search | Ok | Cancel | Exit`; `Ctrl+End` saves and exits. SQL cursors and SQLite views remain read-only.
 
@@ -834,5 +834,11 @@ The Code, Output and Command workspace remembers each window position, size and 
 Running `sumx` with no arguments opens the common `sumIDE --language=xbase` workspace.  The **Command** window is visible and initially focused, while source programs can be created, opened, saved, saved as, and closed from **File**.  `sumx --console` retains the compact historical command-only frontend.
 
 In the interactive help explorer, **F6** or **Ctrl+C** copies the current functional example to the clipboard; **F5** runs it.
+
+### Editable xBase reference
+
+The canonical xBase reference is `src/sumx/help.md`. `help.helpdb` is generated from it by SumDoc and shipped as the runtime cache; `sumx.helpdb` remains the compatibility provider used by sumIDE and the classic console. In both sumIDE and `sumx --console`, the topics and help text have scrollbars; **F2** opens a topic map, **F3** searches, **F5** runs the selected example in the classic console, and **F6 / Ctrl+C** copies it.
+
+Use SumDoc's `markdown2helpdb` after editing `help.md`, and `helpdb2markdown` when a compiled database needs to be reconstructed as editable Markdown.
 
 <p align=center><b>- oOo -<b></p>

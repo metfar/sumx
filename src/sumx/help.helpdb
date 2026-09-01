@@ -1,0 +1,440 @@
+{
+  "schema_version": 1,
+  "title": "sumX Help",
+  "intro": "Every documented language feature includes a functional example.",
+  "topics": [
+    {
+      "name": "DO",
+      "category": "Programming",
+      "summary": "Executes another sumX program file (.PRG).",
+      "syntax": [
+        "DO program",
+        "DO path/to/program.prg"
+      ],
+      "example": "PRINT \"Before\"\nDO examples/hello\nPRINT \"After\"",
+      "notes": [
+        "The .prg extension is optional.",
+        "Relative paths are resolved from the calling program first."
+      ],
+      "see_also": [
+        "RETURN",
+        "--run"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "RETURN",
+      "category": "Programming",
+      "summary": "Stops the current program file and returns to its caller.",
+      "syntax": [
+        "RETURN"
+      ],
+      "example": "PRINT \"This is printed\"\nRETURN\nPRINT \"This is not printed\"",
+      "notes": [],
+      "see_also": [
+        "DO"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "IF",
+      "category": "Programming",
+      "summary": "Conditionally executes one statement or a block; THEN is optional for block form.",
+      "syntax": [
+        "IF condition THEN statement",
+        "IF condition",
+        "    statements",
+        "ENDIF",
+        "IF condition THEN",
+        "    statements",
+        "[ELSE",
+        "    statements]",
+        "ENDIF"
+      ],
+      "example": "a = 5\nIF a == 5 THEN PRINT \"single line\"\nIF a == 5 THEN\n    PRINT \"block line 1\"\n    PRINT \"block line 2\"\nENDIF",
+      "notes": [
+        "A one-line IF with code after THEN does not require ENDIF.",
+        "IF ... THEN with THEN at the end of the logical line starts a block."
+      ],
+      "see_also": [
+        "LOGICAL OPERATORS"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "LOGICAL OPERATORS",
+      "category": "Programming",
+      "summary": "Boolean operators have keyword and symbolic spellings.",
+      "syntax": [
+        "AND / &&",
+        "OR / ||",
+        "XOR / ^^",
+        "NOT / ~ / ¬"
+      ],
+      "example": "ready = ON\nenabled = OFF\n? ready && ~enabled\n? ready || enabled\n? ready ^^ enabled",
+      "notes": [
+        "# is the default comment introducer.",
+        "SET AMPERSAND_COMMENT ON reassigns && to classic xBase inline-comment syntax; AND remains available."
+      ],
+      "see_also": [
+        "IF",
+        "SET AMPERSAND_COMMENT"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "SET AMPERSAND_COMMENT",
+      "category": "Settings",
+      "summary": "Chooses whether && means logical AND or a classic xBase inline comment.",
+      "syntax": [
+        "SET AMPERSAND_COMMENT OFF",
+        "SET AMPERSAND_COMMENT ON"
+      ],
+      "example": "SET AMPERSAND_COMMENT OFF\n? ON && ON\nSET AMPERSAND_COMMENT ON\nA = 5 && this text is now a comment\n? A",
+      "notes": [
+        "OFF is the default",
+        "so && is normally AND.",
+        "# remains the preferred/default comment marker in both modes."
+      ],
+      "see_also": [
+        "LOGICAL OPERATORS"
+      ],
+      "aliases": [
+        "AMPERSAND_COMMENT"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "SET LINE_CONTINUATION",
+      "category": "Settings",
+      "summary": "Selects the physical-line continuation convention used by the source reader.",
+      "syntax": [
+        "SET LINE_CONTINUATION TO BACKSLASH",
+        "SET LINE_CONTINUATION TO SEMICOLON"
+      ],
+      "example": "SET LINE_CONTINUATION TO SEMICOLON\nINPUT \"Continue?\" answer ;\n    KEYS \"YN\" ;\n    DEFAULT \"N\" ;\n    DIALOG\nSET LINE_CONTINUATION TO BACKSLASH",
+      "notes": [
+        "BACKSLASH is the modern/default mode: newline or ; ends a statement and trailing \\ continues it.",
+        "SEMICOLON compatibility mode treats a semicolon at the end of a physical line as continuation; interior semicolons still separate statements."
+      ],
+      "see_also": [
+        "INPUT"
+      ],
+      "aliases": [
+        "LINE_CONTINUATION"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "DEFINE WINDOW",
+      "category": "Screen I/O",
+      "summary": "Defines a Fox/xBase-style named window backed by a sumTUI dialog/window primitive.",
+      "syntax": [
+        "DEFINE WINDOW name FROM row,col TO row,col [TITLE text] [SHADOW] [PANEL] [COLOR SCHEME n]",
+        "ACTIVATE WINDOW name",
+        "DEACTIVATE WINDOW [name]",
+        "RELEASE WINDOW name"
+      ],
+      "example": "answer = \"N\"\nDEFINE WINDOW wDialogo FROM 4,10 TO 12,55 TITLE \" Confirmación \" SHADOW PANEL COLOR SCHEME 5\nACTIVATE WINDOW wDialogo\n@ 1,2 PRINT \"¿Continuar?\"\n@ 3,2 GET answer WIDTH 1 PICTURE \"@! A\"\nREAD\nDEACTIVATE WINDOW wDialogo\nRELEASE WINDOW wDialogo\nPRINT answer",
+      "notes": [
+        "@ row",
+        "column coordinates are relative to the active window while it is active.",
+        "SHOW/HIDE WINDOW are accepted as ACTIVATE/DEACTIVATE aliases."
+      ],
+      "see_also": [
+        "GET",
+        "READ"
+      ],
+      "aliases": [
+        "WINDOW"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "APPEND",
+      "category": "Database",
+      "summary": "Adds a record to the active table; without values it opens the interactive record form when a TUI runtime is available.",
+      "syntax": [
+        "APPEND",
+        "APPEND BLANK",
+        "APPEND field=expression [, field=expression ...]"
+      ],
+      "example": "CREATE TABLE demo (id AUTONUM, name VARCHAR(30))\nUSE demo\nAPPEND\nBROWSE",
+      "notes": [
+        "sumx --run program.prg keeps this interactive form available without opening the IDE.",
+        "sumx --plain --run program.prg uses textual prompts instead."
+      ],
+      "see_also": [
+        "BROWSE"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "BROWSE",
+      "category": "Database",
+      "summary": "Opens an interactive table browser for the active table or displays a browsable expression/cursor.",
+      "syntax": [
+        "BROWSE",
+        "BROW",
+        "BROWSE expression [LIMIT n]"
+      ],
+      "example": "CREATE TABLE demo (id AUTONUM, name VARCHAR(30))\nUSE demo\nAPPEND name=\"Ana\"\nAPPEND name=\"Luis\"\nBROWSE",
+      "notes": [
+        "In interactive --run mode the browser is a sumTUI modal and program execution resumes after it closes.",
+        "Table-backed BROWSE includes New* to append a record directly and then refresh the browser.",
+        "Views and expression/cursor results may be read-only."
+      ],
+      "see_also": [
+        "APPEND"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "PRINT",
+      "category": "Screen I/O",
+      "summary": "sumX alias for SAY/output, provided as a familiar educational spelling.",
+      "syntax": [
+        "PRINT expression [PICTURE picture]",
+        "@ row,column PRINT expression [PICTURE picture]",
+        "@ row,column PRINT expression GET variable [...]"
+      ],
+      "example": "name = \"Ana\"\nPRINT \"Hello \" + name\nPRINT 1250.50 PICTURE \"$999,999.99\"",
+      "notes": [
+        "Classic ? and SAY forms remain available."
+      ],
+      "see_also": [
+        "SAY",
+        "PICTURE",
+        "TRANSFORM"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "PICTURE",
+      "category": "Formatting",
+      "summary": "Formats output and defines GET input/display masks.",
+      "syntax": [
+        "? expression PICTURE picture",
+        "PRINT expression PICTURE picture",
+        "@ row,column SAY expression PICTURE picture",
+        "GET variable PICTURE picture"
+      ],
+      "example": "nValue = 1250.50\n? nValue PICTURE \"$999,999.99\"\n? \"usuario12\" PICTURE \"@! NNNNNNNN\"",
+      "notes": [
+        "A/N/X/!/9/#/Y/L are editable mask positions.",
+        "@!",
+        "@Z",
+        "@C",
+        "@X",
+        "@(",
+        "@E",
+        "@B",
+        "@R",
+        "@K",
+        "@G and @T are supported modifiers."
+      ],
+      "see_also": [
+        "TRANSFORM",
+        "SET FIELD_WRAP_OVERFLOW",
+        "GET"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "TRANSFORM",
+      "category": "Formatting",
+      "summary": "Returns the formatted representation of a value using the same PICTURE engine as output and GET.",
+      "syntax": [
+        "TRANSFORM(value, picture)"
+      ],
+      "example": "cFormatted = TRANSFORM(1250.50, \"$999,999.99\")\nPRINT cFormatted\n? TRANSFORM(\"usuario12\", \"@! NNNNNNNN\")",
+      "notes": [],
+      "see_also": [
+        "PICTURE",
+        "SET FIELD_WRAP_OVERFLOW"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "SET FIELD_WRAP_OVERFLOW",
+      "category": "Settings",
+      "summary": "Controls whether values may continue beyond the logical PICTURE mask.",
+      "syntax": [
+        "SET FIELD_WRAP_OVERFLOW OFF",
+        "SET FIELD_WRAP_OVERFLOW ON"
+      ],
+      "example": "SET FIELD_WRAP_OVERFLOW OFF\n? TRANSFORM(\"usuario12\", \"NNNNNNNN\")\nSET FIELD_WRAP_OVERFLOW ON\n? TRANSFORM(\"usuario12\", \"NNNNNNNN\")",
+      "notes": [
+        "OFF is the default.",
+        "WIDTH and HEIGHT are display viewport dimensions and are independent of this setting."
+      ],
+      "see_also": [
+        "PICTURE",
+        "GET"
+      ],
+      "aliases": [
+        "FIELD_WRAP_OVERFLOW",
+        "SET FIELD WRAP OVERFLOW"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "GET",
+      "category": "Screen I/O",
+      "summary": "Defines an editable field at an absolute screen coordinate.",
+      "syntax": [
+        "@ row,column GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]",
+        "@ row,column SAY expression GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]"
+      ],
+      "example": "notes = \"Edit this text\"\n@ 2,2 SAY \"Notes:\"\n@ 3,2 GET notes WIDTH 30 HEIGHT 4\nREAD\nPRINT notes",
+      "notes": [
+        "WIDTH is visible columns only.",
+        "HEIGHT defaults to 1; HEIGHT > 1 is a multiline textarea-like field.",
+        "Tab moves to the next GET; Tab on the last GET accepts READ."
+      ],
+      "see_also": [
+        "READ",
+        "PICTURE"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "READ",
+      "category": "Screen I/O",
+      "summary": "Activates pending GET fields and writes accepted values back to their variables.",
+      "syntax": [
+        "READ"
+      ],
+      "example": "name = SPACE(20)\n@ 2,2 SAY \"Name:\" GET name WIDTH 12\nREAD\nPRINT name",
+      "notes": [],
+      "see_also": [
+        "GET"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "ACCEPT",
+      "category": "Console I/O",
+      "summary": "Reads a character response using the classic xBase ACCEPT ... TO syntax.",
+      "syntax": [
+        "ACCEPT \"Prompt\" TO variable"
+      ],
+      "example": "ACCEPT \"Por favor, ingresa tu nombre: \" TO cNombre;\nPRINT cNombre;",
+      "notes": [
+        "ACCEPT always stores character text",
+        "even when the target variable previously contained another type."
+      ],
+      "see_also": [
+        "INPUT",
+        "PRINT"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "INPUT",
+      "category": "Console I/O",
+      "summary": "Reads a console response into a variable using a BASIC-like educational syntax.",
+      "syntax": [
+        "INPUT \"Prompt\" variable",
+        "INPUT \"Prompt\" variable WIDTH n [HEIGHT n]",
+        "INPUT \"Prompt\" variable PICTURE picture",
+        "INPUT \"Prompt\" variable HIDDEN",
+        "INPUT \"Prompt\" variable MASK \"*\"",
+        "INPUT \"Prompt\" variable KEYS \"YN\" [DEFAULT \"N\"] [TIMEOUT 10] [CASE_SENSITIVE] [DIALOG]",
+        "INPUT \"Prompt\" variable \\  ... \\  DIALOG ;"
+      ],
+      "example": "INPUT \"Continue?\" answer \\n    KEYS \"YN\" \\n    DEFAULT \"N\" \\n    TIMEOUT 10 \\n    DIALOG ;\nPRINT answer;",
+      "notes": [
+        "If the target already exists",
+        "sumX converts the response to its current logical/numeric type when possible.",
+        "A new target is created as character text.",
+        "HIDDEN echoes nothing; MASK repeats only the supplied visual mask per entered character.",
+        "WIDTH/HEIGHT are presentation dimensions; PICTURE remains an input/format mask.",
+        "KEYS provides DOS CHOICE-style one-key input; DEFAULT and TIMEOUT support unattended input.",
+        "By default",
+        "newline or a top-level semicolon ends the command; a trailing backslash continues the logical line. SET LINE_CONTINUATION TO SEMICOLON enables legacy semicolon-at-EOL continuation.",
+        "Multiline INPUT currently does not combine with HIDDEN",
+        "MASK",
+        "KEYS or PICTURE."
+      ],
+      "see_also": [
+        "ACCEPT",
+        "GET",
+        "READ",
+        "PRINT",
+        "PICTURE"
+      ],
+      "aliases": [],
+      "language": "xbase"
+    },
+    {
+      "name": "WCOLS",
+      "category": "Environment",
+      "summary": "Returns the number of visible columns in the current sumX command workspace.",
+      "syntax": [
+        "WCOLS()"
+      ],
+      "example": "? WCOLS()",
+      "notes": [
+        "In plain mode it falls back to the terminal width.",
+        "SCREENCOLS() is a descriptive alias."
+      ],
+      "see_also": [
+        "WROWS"
+      ],
+      "aliases": [
+        "SCREENCOLS"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "WROWS",
+      "category": "Environment",
+      "summary": "Returns the number of visible rows in the current sumX command workspace.",
+      "syntax": [
+        "WROWS()"
+      ],
+      "example": "? WROWS()",
+      "notes": [
+        "In plain mode it falls back to the terminal height.",
+        "SCREENROWS() is a descriptive alias."
+      ],
+      "see_also": [
+        "WCOLS"
+      ],
+      "aliases": [
+        "SCREENROWS"
+      ],
+      "language": "xbase"
+    },
+    {
+      "name": "SHELL ESCAPE",
+      "category": "Environment",
+      "summary": "Runs a non-interactive operating-system shell command and keeps its output in command history.",
+      "syntax": [
+        "!command"
+      ],
+      "example": "!printf \"hello from the shell\\n\"",
+      "notes": [],
+      "see_also": [
+        "DO"
+      ],
+      "aliases": [
+        "!"
+      ],
+      "language": "xbase"
+    }
+  ]
+}

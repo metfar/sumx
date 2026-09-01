@@ -28,7 +28,7 @@ from types import SimpleNamespace;
 from unittest.mock import patch;
 from pathlib import Path;
 
-from sumtui import Key, KeyEvent;
+from sumtui import Key, KeyEvent, ListView;
 from sumx import Interpreter, SumCursor, SumObject, SumQuery, SumRow;
 from sumx.compiler import compile_file, compile_source;
 from sumx.helpdb import TOPICS, find_topic;
@@ -1239,5 +1239,29 @@ class SumXDefaultWorkspaceTests(unittest.TestCase):
             self.assertTrue(app.app.dispatch(KeyEvent(Key.F6)));
             self.assertEqual(clipboard.paste_text(), topic.example);
             app.app.root.cancel();
+        finally:
+            app.interpreter.runtime.db.close();
+
+
+class EditableHelpMarkdownTests(unittest.TestCase):
+    def test_sumx_help_uses_packaged_compiled_database_with_editable_source(self):
+        from importlib.resources import files;
+        from sumx.helpdb import CORPUS, find_topic;
+        source = files("sumx").joinpath("help.md").read_text(encoding="utf-8");
+        compiled = files("sumx").joinpath("help.helpdb").read_text(encoding="utf-8");
+        self.assertIn("# sumX Help", source);
+        self.assertIn('"schema_version": 1', compiled);
+        self.assertGreater(len(CORPUS.topics), 10);
+        self.assertEqual(find_topic("!").name, "SHELL ESCAPE");
+
+    def test_classic_help_f2_opens_topic_map(self):
+        app = SumXConsoleApp();
+        try:
+            topic = find_topic("IF");
+            app._show_help(topic.markdown(), title="sumX Help - IF");
+            self.assertTrue(app.app.dispatch(KeyEvent(Key.F2)));
+            self.assertIsInstance(app.app.focus.current, ListView);
+            app.app.pop_modal();
+            app.app.pop_modal();
         finally:
             app.interpreter.runtime.db.close();

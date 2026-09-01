@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.4 - 2026-09-01
+
+- Kept `help.md` as the canonical editable xBase reference while switching runtime loading to the generated `help.helpdb` cache.
+- `.helpdb` generation is now owned by SumDoc 0.2.1; sumX only consumes the compiled help format through sumTUI's lightweight runtime model.
+- Added `help.helpdb` to package data so installed help does not require SumDoc or Markdown parsing at runtime.
+- Preserved the historical `sumx.helpdb` provider API used by sumIDE and `sumx --console`.
+
+## 0.2.3 - 2026-09-01
+
+- Moved the canonical xBase reference out of Python literals into the editable packaged `sumx/help.md`.
+- `helpdb.py` became a compatibility adapter over the Markdown corpus.
+- Classic `sumx --console` help gained scrollbars for topics/content and F2 Topic Map navigation.
+
+## 0.2.2 - 2026-09-01
+
+- Updated the common IDE integration to sumIDE 0.2.2 so F1 from an xBase buffer opens the existing sumX topic/help database instead of generic editor help.
+- Kept the sumX help corpus owned by sumX and discoverable by sumIDE through the language profile.
+
 ## 0.2.1 - 2026-09-01
 
 - `sumx` with no arguments now opens the common sumIDE xBase workspace with Command visible and initially focused.

@@ -28,7 +28,7 @@ from pathlib import Path;
 import subprocess;
 import time;
 
-from sumtui import Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, MarkdownView, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
+from sumtui import Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, ListViewPane, MarkdownView, MarkdownViewPane, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
 from sumtui.clipboard import clipboard;
 
 from . import __version__;
@@ -778,11 +778,51 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
                 self.run_program(example, name="<help:{}>".format(topic.name));
             return True;
 
-        hints = StatusBar("Tab Topic/Text  F3 Search  F5 Run Example  F6/Ctrl+C Copy Example  F11 Max/Restore  Esc Close");
-        body = HBox(topics, viewer, sizes=[26, None]);
+        def topic_map():
+            rows = [];
+            current_index = 0;
+            current_topic = current.get("topic");
+            for index, name in enumerate(names):
+                topic = find_topic(name);
+                category = getattr(topic, "category", "") if topic is not None else "";
+                rows.append(("{} / {}".format(category, name) if category else name, name));
+                if current_topic is not None and name == current_topic.name:
+                    current_index = index;
+            listing = ListView(rows, title="Category / Topic");
+            listing.select(current_index);
+
+            def map_close():
+                self.app.pop_modal();
+                self.app.focus.set(topics);
+                self.app.invalidate();
+                return True;
+
+            def map_activate(*_values):
+                name = listing.current_value;
+                if name is None:
+                    return False;
+                for index, topic_name in enumerate(names):
+                    if topic_name == name:
+                        topics.select(index);
+                        break;
+                show_topic(name);
+                return map_close();
+
+            listing.on_activate = map_activate;
+            pane = ListViewPane(listing, theme=self.app.theme);
+            status = StatusBar("Enter Go to topic  Esc Return to help");
+            self.app.push_modal(Dialog(VBox(pane, status, sizes=[None, 1]), title="sumX Help Topic Map", width=72, height=min(28, max(12, len(rows) + 6)), on_cancel=map_close, shadow=True));
+            self.app.focus.set(listing);
+            self.app.invalidate();
+            return True;
+
+        hints = StatusBar("F2 Topic Map  Tab Topic/Text  F3 Search  F5 Run Example  F6/Ctrl+C Copy Example  F11 Max/Restore  Esc Close");
+        topics_pane = ListViewPane(topics, theme=self.app.theme);
+        viewer_pane = MarkdownViewPane(view=viewer, theme=self.app.theme);
+        body = HBox(topics_pane, viewer_pane, sizes=[28, None]);
         content = VBox(body, hints, sizes=[None, 1]);
         dialog = Dialog(content, title=title, width=104, height=30, on_cancel=close, padding=(0, 1), maximizable=True);
-        self.app.push_modal(dialog, bindings={"f3": search, "f5": run_example, "f6": copy_example, "ctrl+c": copy_example});
+        self.app.push_modal(dialog, bindings={"f2": topic_map, "f3": search, "f5": run_example, "f6": copy_example, "ctrl+c": copy_example});
         self.app.focus.set(topics);
 
     def _show_search(self, on_find, title="Search"):

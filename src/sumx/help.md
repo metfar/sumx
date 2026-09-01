@@ -1,0 +1,625 @@
+# sumX Help
+
+Every documented language feature includes a functional example.
+
+## Programming
+
+### DO
+
+Executes another sumX program file (.PRG).
+
+#### Syntax
+
+```text
+DO program
+DO path/to/program.prg
+```
+
+#### Notes
+
+- The .prg extension is optional.
+- Relative paths are resolved from the calling program first.
+
+#### Functional example
+
+```xbase
+PRINT "Before"
+DO examples/hello
+PRINT "After"
+```
+
+#### See also
+
+RETURN, --run
+
+### RETURN
+
+Stops the current program file and returns to its caller.
+
+#### Syntax
+
+```text
+RETURN
+```
+
+#### Functional example
+
+```xbase
+PRINT "This is printed"
+RETURN
+PRINT "This is not printed"
+```
+
+#### See also
+
+DO
+
+### IF
+
+Conditionally executes one statement or a block; THEN is optional for block form.
+
+#### Syntax
+
+```text
+IF condition THEN statement
+IF condition
+    statements
+ENDIF
+IF condition THEN
+    statements
+[ELSE
+    statements]
+ENDIF
+```
+
+#### Notes
+
+- A one-line IF with code after THEN does not require ENDIF.
+- IF ... THEN with THEN at the end of the logical line starts a block.
+
+#### Functional example
+
+```xbase
+a = 5
+IF a == 5 THEN PRINT "single line"
+IF a == 5 THEN
+    PRINT "block line 1"
+    PRINT "block line 2"
+ENDIF
+```
+
+#### See also
+
+LOGICAL OPERATORS
+
+### LOGICAL OPERATORS
+
+Boolean operators have keyword and symbolic spellings.
+
+#### Syntax
+
+```text
+AND / &&
+OR / ||
+XOR / ^^
+NOT / ~ / ¬
+```
+
+#### Notes
+
+- # is the default comment introducer.
+- SET AMPERSAND_COMMENT ON reassigns && to classic xBase inline-comment syntax; AND remains available.
+
+#### Functional example
+
+```xbase
+ready = ON
+enabled = OFF
+? ready && ~enabled
+? ready || enabled
+? ready ^^ enabled
+```
+
+#### See also
+
+IF, SET AMPERSAND_COMMENT
+
+## Settings
+
+### SET AMPERSAND_COMMENT
+
+Chooses whether && means logical AND or a classic xBase inline comment.
+
+#### Syntax
+
+```text
+SET AMPERSAND_COMMENT OFF
+SET AMPERSAND_COMMENT ON
+```
+
+#### Notes
+
+- OFF is the default, so && is normally AND.
+- # remains the preferred/default comment marker in both modes.
+
+#### Functional example
+
+```xbase
+SET AMPERSAND_COMMENT OFF
+? ON && ON
+SET AMPERSAND_COMMENT ON
+A = 5 && this text is now a comment
+? A
+```
+
+#### See also
+
+LOGICAL OPERATORS
+
+#### Aliases
+
+AMPERSAND_COMMENT
+
+### SET LINE_CONTINUATION
+
+Selects the physical-line continuation convention used by the source reader.
+
+#### Syntax
+
+```text
+SET LINE_CONTINUATION TO BACKSLASH
+SET LINE_CONTINUATION TO SEMICOLON
+```
+
+#### Notes
+
+- BACKSLASH is the modern/default mode: newline or ; ends a statement and trailing \ continues it.
+- SEMICOLON compatibility mode treats a semicolon at the end of a physical line as continuation; interior semicolons still separate statements.
+
+#### Functional example
+
+```xbase
+SET LINE_CONTINUATION TO SEMICOLON
+INPUT "Continue?" answer ;
+    KEYS "YN" ;
+    DEFAULT "N" ;
+    DIALOG
+SET LINE_CONTINUATION TO BACKSLASH
+```
+
+#### See also
+
+INPUT
+
+#### Aliases
+
+LINE_CONTINUATION
+
+## Screen I/O
+
+### DEFINE WINDOW
+
+Defines a Fox/xBase-style named window backed by a sumTUI dialog/window primitive.
+
+#### Syntax
+
+```text
+DEFINE WINDOW name FROM row,col TO row,col [TITLE text] [SHADOW] [PANEL] [COLOR SCHEME n]
+ACTIVATE WINDOW name
+DEACTIVATE WINDOW [name]
+RELEASE WINDOW name
+```
+
+#### Notes
+
+- @ row,column coordinates are relative to the active window while it is active.
+- SHOW/HIDE WINDOW are accepted as ACTIVATE/DEACTIVATE aliases.
+
+#### Functional example
+
+```xbase
+answer = "N"
+DEFINE WINDOW wDialogo FROM 4,10 TO 12,55 TITLE " Confirmación " SHADOW PANEL COLOR SCHEME 5
+ACTIVATE WINDOW wDialogo
+@ 1,2 PRINT "¿Continuar?"
+@ 3,2 GET answer WIDTH 1 PICTURE "@! A"
+READ
+DEACTIVATE WINDOW wDialogo
+RELEASE WINDOW wDialogo
+PRINT answer
+```
+
+#### See also
+
+GET, READ
+
+#### Aliases
+
+WINDOW
+
+## Database
+
+### APPEND
+
+Adds a record to the active table; without values it opens the interactive record form when a TUI runtime is available.
+
+#### Syntax
+
+```text
+APPEND
+APPEND BLANK
+APPEND field=expression [, field=expression ...]
+```
+
+#### Notes
+
+- sumx --run program.prg keeps this interactive form available without opening the IDE.
+- sumx --plain --run program.prg uses textual prompts instead.
+
+#### Functional example
+
+```xbase
+CREATE TABLE demo (id AUTONUM, name VARCHAR(30))
+USE demo
+APPEND
+BROWSE
+```
+
+#### See also
+
+BROWSE
+
+### BROWSE
+
+Opens an interactive table browser for the active table or displays a browsable expression/cursor.
+
+#### Syntax
+
+```text
+BROWSE
+BROW
+BROWSE expression [LIMIT n]
+```
+
+#### Notes
+
+- In interactive --run mode the browser is a sumTUI modal and program execution resumes after it closes.
+- Table-backed BROWSE includes New* to append a record directly and then refresh the browser.
+- Views and expression/cursor results may be read-only.
+
+#### Functional example
+
+```xbase
+CREATE TABLE demo (id AUTONUM, name VARCHAR(30))
+USE demo
+APPEND name="Ana"
+APPEND name="Luis"
+BROWSE
+```
+
+#### See also
+
+APPEND
+
+## Screen I/O
+
+### PRINT
+
+sumX alias for SAY/output, provided as a familiar educational spelling.
+
+#### Syntax
+
+```text
+PRINT expression [PICTURE picture]
+@ row,column PRINT expression [PICTURE picture]
+@ row,column PRINT expression GET variable [...]
+```
+
+#### Notes
+
+- Classic ? and SAY forms remain available.
+
+#### Functional example
+
+```xbase
+name = "Ana"
+PRINT "Hello " + name
+PRINT 1250.50 PICTURE "$999,999.99"
+```
+
+#### See also
+
+SAY, PICTURE, TRANSFORM
+
+## Formatting
+
+### PICTURE
+
+Formats output and defines GET input/display masks.
+
+#### Syntax
+
+```text
+? expression PICTURE picture
+PRINT expression PICTURE picture
+@ row,column SAY expression PICTURE picture
+GET variable PICTURE picture
+```
+
+#### Notes
+
+- A/N/X/!/9/#/Y/L are editable mask positions.
+- @!, @Z, @C, @X, @(, @E, @B, @R, @K, @G and @T are supported modifiers.
+
+#### Functional example
+
+```xbase
+nValue = 1250.50
+? nValue PICTURE "$999,999.99"
+? "usuario12" PICTURE "@! NNNNNNNN"
+```
+
+#### See also
+
+TRANSFORM, SET FIELD_WRAP_OVERFLOW, GET
+
+### TRANSFORM
+
+Returns the formatted representation of a value using the same PICTURE engine as output and GET.
+
+#### Syntax
+
+```text
+TRANSFORM(value, picture)
+```
+
+#### Functional example
+
+```xbase
+cFormatted = TRANSFORM(1250.50, "$999,999.99")
+PRINT cFormatted
+? TRANSFORM("usuario12", "@! NNNNNNNN")
+```
+
+#### See also
+
+PICTURE, SET FIELD_WRAP_OVERFLOW
+
+## Settings
+
+### SET FIELD_WRAP_OVERFLOW
+
+Controls whether values may continue beyond the logical PICTURE mask.
+
+#### Syntax
+
+```text
+SET FIELD_WRAP_OVERFLOW OFF
+SET FIELD_WRAP_OVERFLOW ON
+```
+
+#### Notes
+
+- OFF is the default.
+- WIDTH and HEIGHT are display viewport dimensions and are independent of this setting.
+
+#### Functional example
+
+```xbase
+SET FIELD_WRAP_OVERFLOW OFF
+? TRANSFORM("usuario12", "NNNNNNNN")
+SET FIELD_WRAP_OVERFLOW ON
+? TRANSFORM("usuario12", "NNNNNNNN")
+```
+
+#### See also
+
+PICTURE, GET
+
+#### Aliases
+
+FIELD_WRAP_OVERFLOW, SET FIELD WRAP OVERFLOW
+
+## Screen I/O
+
+### GET
+
+Defines an editable field at an absolute screen coordinate.
+
+#### Syntax
+
+```text
+@ row,column GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]
+@ row,column SAY expression GET variable [WIDTH n] [HEIGHT n] [PICTURE picture]
+```
+
+#### Notes
+
+- WIDTH is visible columns only.
+- HEIGHT defaults to 1; HEIGHT > 1 is a multiline textarea-like field.
+- Tab moves to the next GET; Tab on the last GET accepts READ.
+
+#### Functional example
+
+```xbase
+notes = "Edit this text"
+@ 2,2 SAY "Notes:"
+@ 3,2 GET notes WIDTH 30 HEIGHT 4
+READ
+PRINT notes
+```
+
+#### See also
+
+READ, PICTURE
+
+### READ
+
+Activates pending GET fields and writes accepted values back to their variables.
+
+#### Syntax
+
+```text
+READ
+```
+
+#### Functional example
+
+```xbase
+name = SPACE(20)
+@ 2,2 SAY "Name:" GET name WIDTH 12
+READ
+PRINT name
+```
+
+#### See also
+
+GET
+
+## Console I/O
+
+### ACCEPT
+
+Reads a character response using the classic xBase ACCEPT ... TO syntax.
+
+#### Syntax
+
+```text
+ACCEPT "Prompt" TO variable
+```
+
+#### Notes
+
+- ACCEPT always stores character text, even when the target variable previously contained another type.
+
+#### Functional example
+
+```xbase
+ACCEPT "Por favor, ingresa tu nombre: " TO cNombre;
+PRINT cNombre;
+```
+
+#### See also
+
+INPUT, PRINT
+
+### INPUT
+
+Reads a console response into a variable using a BASIC-like educational syntax.
+
+#### Syntax
+
+```text
+INPUT "Prompt" variable
+INPUT "Prompt" variable WIDTH n [HEIGHT n]
+INPUT "Prompt" variable PICTURE picture
+INPUT "Prompt" variable HIDDEN
+INPUT "Prompt" variable MASK "*"
+INPUT "Prompt" variable KEYS "YN" [DEFAULT "N"] [TIMEOUT 10] [CASE_SENSITIVE] [DIALOG]
+INPUT "Prompt" variable \  ... \  DIALOG ;
+```
+
+#### Notes
+
+- If the target already exists, sumX converts the response to its current logical/numeric type when possible.
+- A new target is created as character text.
+- HIDDEN echoes nothing; MASK repeats only the supplied visual mask per entered character.
+- WIDTH/HEIGHT are presentation dimensions; PICTURE remains an input/format mask.
+- KEYS provides DOS CHOICE-style one-key input; DEFAULT and TIMEOUT support unattended input.
+- By default, newline or a top-level semicolon ends the command; a trailing backslash continues the logical line. SET LINE_CONTINUATION TO SEMICOLON enables legacy semicolon-at-EOL continuation.
+- Multiline INPUT currently does not combine with HIDDEN, MASK, KEYS or PICTURE.
+
+#### Functional example
+
+```xbase
+INPUT "Continue?" answer \n    KEYS "YN" \n    DEFAULT "N" \n    TIMEOUT 10 \n    DIALOG ;
+PRINT answer;
+```
+
+#### See also
+
+ACCEPT, GET, READ, PRINT, PICTURE
+
+## Environment
+
+### WCOLS
+
+Returns the number of visible columns in the current sumX command workspace.
+
+#### Syntax
+
+```text
+WCOLS()
+```
+
+#### Notes
+
+- In plain mode it falls back to the terminal width.
+- SCREENCOLS() is a descriptive alias.
+
+#### Functional example
+
+```xbase
+? WCOLS()
+```
+
+#### See also
+
+WROWS
+
+#### Aliases
+
+SCREENCOLS
+
+### WROWS
+
+Returns the number of visible rows in the current sumX command workspace.
+
+#### Syntax
+
+```text
+WROWS()
+```
+
+#### Notes
+
+- In plain mode it falls back to the terminal height.
+- SCREENROWS() is a descriptive alias.
+
+#### Functional example
+
+```xbase
+? WROWS()
+```
+
+#### See also
+
+WCOLS
+
+#### Aliases
+
+SCREENROWS
+
+### SHELL ESCAPE
+
+Runs a non-interactive operating-system shell command and keeps its output in command history.
+
+#### Syntax
+
+```text
+!command
+```
+
+#### Functional example
+
+```xbase
+!printf "hello from the shell\n"
+```
+
+#### See also
+
+DO
+
+#### Aliases
+
+!
