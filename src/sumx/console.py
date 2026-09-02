@@ -220,7 +220,7 @@ The default file is `~/.config/sumx/config.json`, or `$XDG_CONFIG_HOME/sumx/conf
 The command line can override the saved theme for one session:
 
 ```bash
-sumx --theme "Ralesk's MC" programa.prg
+sumx --theme ZX programa.prg
 sumx --theme DOS --run programa.prg
 ```
 
@@ -1217,8 +1217,8 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         dialog = Dialog(content, title=title, width=width, height=height, on_cancel=finish, maximizable=True);
         self.app.push_modal(dialog, bindings={"ctrl+end": lambda: save(True)});
 
-    def run(self):
-        return self.app.run();
+    def run(self, backend="tui"):
+        return self.app.run(backend=backend);
 
 
 class SumXProgramApp(SumXConsoleApp):
@@ -1272,11 +1272,11 @@ class SumXProgramApp(SumXConsoleApp):
     def history_lines(self):
         return list(self.command.output);
 
-    def run_file(self, path):
+    def run_file(self, path, backend="tui"):
         self._scheduled_program = str(path);
         self._started_program = False;
         self.app.add_idle(self._start_scheduled_program);
-        self.app.run();
+        self.app.run(backend=backend);
         return self._program_exit_code;
 
 

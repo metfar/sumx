@@ -33,7 +33,7 @@ sumx --compile program.prg -o -          # generated Python on stdout
 sumx --plain                             # plain command REPL
 sumx --plain --run program.prg           # textual program I/O, no TUI dialogs/forms
 sumx --list-themes                        # available sumTUI themes
-sumx --theme "Ralesk's MC" program.prg  # one-session theme override
+sumx --theme ZX program.prg  # one-session theme override
 sumx --line-continuation semicolon --run old.prg  # old xBase continuation
 sumx --ampersand-comment --run old.prg            # && comments from first line
 sumx -c 'A=SQL.SELECT count(*) FROM customers;'
@@ -128,7 +128,7 @@ The **sumX runtime/command environment** deliberately keeps its own runtime conf
 A command-line theme can still override a session:
 
 ```bash
-sumx --theme "Ralesk's MC" program.prg
+sumx --theme ZX program.prg
 sumx --theme DOS --run program.prg
 sumx --list-themes
 ```
@@ -824,5 +824,18 @@ In the interactive help explorer, **F6** or **Ctrl+C** copies the current functi
 The canonical xBase reference is `src/sumx/help.md`. `help.helpdb` is generated from it by SumDoc and shipped as the runtime cache; `sumx.helpdb` remains the compatibility provider used by sumIDE and the classic console. In both sumIDE and `sumx --console`, the topics and help text have scrollbars; **F2** opens a topic map, **F3** searches, **F5** runs the selected example in the classic console, and **F6 / Ctrl+C** copies it.
 
 Use SumDoc's `markdown2helpdb` after editing `help.md`, and `helpdb2markdown` when a compiled database needs to be reconstructed as editable Markdown.
+
+## One xBase application, selectable presentation
+
+```bash
+sumx program.prg
+sumx --gui program.prg
+sumx --console
+sumx --gui --console
+sumx --run program.prg
+sumx --gui --run program.prg
+```
+
+The GUI switches presentation backend; they do not select a separate xBase editor, console or runtime implementation. The same Sum application state, syntax highlighter, commands, dialogs, keybindings, keyboard and mouse semantics are retained.
 
 <p align=center><b>- oOo -<b></p>

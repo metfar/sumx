@@ -26,7 +26,7 @@ from sumtui import THEMES, make_theme;
 from sumx.compiler import compile_source;
 
 
-custom = make_theme("Ralesk's MC").copy(name="Classroom MC", style_overrides=(("syntax_keyword", "bold #abcdef"),));
+custom = make_theme("ZX").copy(name="Classroom ZX", style_overrides=(("syntax_keyword", "bold #abcdef"),));
 THEMES[custom.name] = custom;
 python_source = compile_source('PRINT "Hello";\n', source_name="lesson.prg", theme=custom.name);
 for line in python_source.splitlines():

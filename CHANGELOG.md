@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.11 - 2026-09-02
+- sumX now follows the ecosystem-wide ZX fresh-install default instead of imposing a separate xBase default theme.
+- XBASE, DBASE, FOXPRO, DOS and the other built-in themes remain selectable explicitly.
+- Updated theme examples and coordinated UI/IDE dependency floors.
+
+## 0.2.10 - 2026-09-02
+
+- Added common presentation selection to xBase workflows: `sumx --gui`, positional source editing, `--console`, and interactive `--run FILE --gui` now select the graphical backend for the same Sum application objects.
+- The normal TUI remains the default; keyboard and mouse behavior belong to the shared application rather than to separate xBase frontends.
+- The xBase editor keeps the same sumIDE syntax highlighter, menus, command window, help and configuration when presented through sumGUI.
+- Updated coordinated dependencies to sumUI 0.1.0a4, sumTUI 0.8.0a5, sumIDE 0.2.10 and optional sumGUI 0.2.0a6.
+
 ## 0.2.8 - 2026-09-01
 
 - Requires sumIDE 0.2.6 so the `sumx` IDE launcher uses the dedicated sumX syntax lexer rather than generic FoxPro highlighting.

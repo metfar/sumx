@@ -30,6 +30,6 @@ from sumx.config import load_config, save_config;
 
 with tempfile.TemporaryDirectory() as folder:
     path = Path(folder) / "sumx.json";
-    save_config({"theme": "Ralesk's MC"}, path);
+    save_config({"theme": "ZX"}, path);
     config = load_config(path);
     print(config["theme"]);

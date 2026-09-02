@@ -27,6 +27,7 @@ from pathlib import Path;
 import sys;
 
 from rich.console import Console;
+from sumui import add_backend_arguments, backend_from_args;
 
 from sumtui import InputSpec, read_input;
 
@@ -185,7 +186,8 @@ def main(argv=None):
     actions.add_argument("--check", metavar="FILE", help="check source structure without executing it");
     parser.add_argument("-o", "--output", help="output file for --compile; use - for stdout");
     parser.add_argument("--database", default=":memory:", help="SQLite database path (default: in-memory)");
-    parser.add_argument("--plain", action="store_true", help="force textual terminal I/O; with --run, disable sumTUI dialogs/forms/browse windows");
+    parser.add_argument("--plain", action="store_true", help="force plain textual terminal I/O and disable Sum UI widgets");
+    add_backend_arguments(parser);
     parser.add_argument("--console", action="store_true", help="open the classic command-only sumX frontend instead of the common sumIDE xBase workspace");
     parser.add_argument("--theme", default=None, help="sumTUI theme for this interactive session; saved configuration is used when omitted");
     parser.add_argument("--config", help="configuration file path (default: XDG_CONFIG_HOME/sumx/config.json or ~/.config/sumx/config.json)");
@@ -196,6 +198,9 @@ def main(argv=None):
     parser.add_argument("--version", action="store_true", help="show version and exit");
     parser.add_argument("--self-test", action="store_true", help="run non-interactive self-test");
     args = parser.parse_args(argv);
+    ui_backend = backend_from_args(args);
+    if args.plain and ui_backend == "gui":
+        parser.error("--plain and --gui are mutually exclusive");
     if args.version:
         print("sumX {}".format(__version__));
         return 0;
@@ -262,7 +267,7 @@ def main(argv=None):
                 results = interpreter.run_file(args.run, interactive=False);
                 return _process_file_results(interpreter, console, diagnostics, results, plain=True);
             runner = SumXProgramApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config);
-            code = runner.run_file(args.run);
+            code = runner.run_file(args.run, backend=ui_backend);
             for line, style in runner.history_lines():
                 target = diagnostics if style == "command_error" else console;
                 target.print(line);
@@ -271,23 +276,23 @@ def main(argv=None):
             diagnostics.print("Error: {}".format(exc), style="bold red");
             return 1;
     if args.file:
-        if args.plain or not sys.stdin.isatty() or not sys.stdout.isatty():
-            diagnostics.print("Opening a source file requires an interactive terminal. Use --run to execute it.", style="bold red");
+        if args.plain or (ui_backend == "tui" and (not sys.stdin.isatty() or not sys.stdout.isatty())):
+            diagnostics.print("Opening a source file in TUI mode requires an interactive terminal. Use --gui or --run.", style="bold red");
             return 2;
         try:
-            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme, config_path=args.config).run();
+            return SumXEditorApp(args.file, interpreter=interpreter, theme=args.theme, config_path=args.config).run(backend=ui_backend);
         except Exception as exc:
             diagnostics.print("Error: {}".format(exc), style="bold red");
             return 1;
-    if args.plain or not sys.stdin.isatty() or not sys.stdout.isatty():
+    if args.plain or (ui_backend == "tui" and (not sys.stdin.isatty() or not sys.stdout.isatty())):
         return plain_repl(interpreter);
     if args.console:
-        return SumXConsoleApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run();
+        return SumXConsoleApp(interpreter=interpreter, theme=selected_theme, config_path=args.config, config=config).run(backend=ui_backend);
     try:
         ide = SumXEditorApp(None, interpreter=interpreter, theme=args.theme, config_path=args.config);
         ide.activate_workspace_window(ide.command_window);
         ide._update_status("xBase Command - File manages source programs");
-        return ide.run();
+        return ide.run(backend=ui_backend);
     except Exception as exc:
         diagnostics.print("Error: {}".format(exc), style="bold red");
         return 1;

@@ -969,15 +969,15 @@ class ConfigurationThemeTests(unittest.TestCase):
             config = Path(directory) / "sumx.json";
             app = SumXConsoleApp(config_path=config);
             try:
-                self.assertEqual(app.app.theme.name, "XBASE");
-                self.assertTrue(app.set_theme("Ralesk's MC"));
+                self.assertEqual(app.app.theme.name, "ZX");
+                self.assertTrue(app.set_theme("C64"));
                 self.assertTrue(app.save_configuration());
                 self.assertTrue(config.exists());
             finally:
                 app.interpreter.runtime.db.close();
             reloaded = SumXConsoleApp(config_path=config);
             try:
-                self.assertEqual(reloaded.app.theme.name, "Ralesk's MC");
+                self.assertEqual(reloaded.app.theme.name, "C64");
             finally:
                 reloaded.interpreter.runtime.db.close();
 
@@ -1009,10 +1009,10 @@ class ConfigurationThemeTests(unittest.TestCase):
     def test_program_runtime_uses_saved_theme_without_assistant(self):
         with tempfile.TemporaryDirectory() as directory:
             config = Path(directory) / "sumx.json";
-            config.write_text("{\"theme\": \"Ralesk's MC\"}\n", encoding="utf-8");
+            config.write_text("{\"theme\": \"DOS\"}\n", encoding="utf-8");
             app = SumXProgramApp(config_path=config);
             try:
-                self.assertEqual(app.app.theme.name, "Ralesk's MC");
+                self.assertEqual(app.app.theme.name, "DOS");
                 self.assertIs(app.app.root, app.command);
                 self.assertFalse(app.command.show_prompt);
             finally:
@@ -1200,13 +1200,13 @@ class CompatibilitySyntaxTests(InterpreterTestCase):
 class CompiledThemeTests(unittest.TestCase):
     def test_custom_theme_is_embedded_as_python_data(self):
         from sumtui import THEMES, make_theme;
-        custom = make_theme("Ralesk's MC").copy(name="Teaching MC", style_overrides=(("syntax_keyword", "bold #abcdef"),));
+        custom = make_theme("ZX").copy(name="Teaching ZX", style_overrides=(("syntax_keyword", "bold #abcdef"),));
         THEMES[custom.name] = custom;
         try:
             generated = compile_source('PRINT "Hello";\n', source_name="hello.prg", theme=custom.name);
-            self.assertIn("# Compile-time theme: Teaching MC", generated);
+            self.assertIn("# Compile-time theme: Teaching ZX", generated);
             self.assertIn("PROGRAM_THEME_NAME = None", generated);
-            self.assertIn("Teaching MC", generated);
+            self.assertIn("Teaching ZX", generated);
             self.assertIn("#abcdef", generated);
         finally:
             THEMES.pop(custom.name, None);

@@ -8,4 +8,4 @@ printf '%s\n' 'Available themes:'
 sumx --list-themes
 
 printf '\n%s\n' 'Open with a per-session theme and a separate classroom config:'
-sumx --config "$CONFIG" --theme "Ralesk's MC" examples/hello.prg
+sumx --config "$CONFIG" --theme ZX examples/hello.prg

@@ -29,7 +29,7 @@ from pathlib import Path;
 from sumtui import THEMES;
 
 
-DEFAULT_THEME = "XBASE";
+DEFAULT_THEME = "ZX";
 
 
 def default_config_path():
@@ -58,7 +58,7 @@ def save_config(data, path=None):
 
 
 def theme_names():
-    preferred = ("XBASE", "Ralesk's MC", "DBASE", "FOXPRO", "DOS", "RAR", "Dark", "Light", "C64", "MSX", "ZX");
+    preferred = ("ZX", "XBASE", "DBASE", "FOXPRO", "DOS", "RAR", "C64", "MSX", "Dark", "Light");
     names = [name for name in preferred if name in THEMES];
     names.extend(name for name in THEMES if name not in names);
     return tuple(names);
