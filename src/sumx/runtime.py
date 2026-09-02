@@ -26,6 +26,7 @@ import shutil;
 
 from .database import SumXDatabase;
 from .sql import execute_sql;
+from .ui_contracts import messagebox_spec;
 
 
 class Runtime:
@@ -43,6 +44,7 @@ class Runtime:
         self.active_window = None;
         self._screen_size_provider = None;
         self._messagebox_handler = None;
+        self.last_dialog_spec = None;
         self.set_debug_level(debug_level);
         self.db = SumXDatabase(database, max_areas=max_areas);
 
@@ -102,6 +104,7 @@ class Runtime:
         return self._messagebox_handler;
 
     def messagebox(self, text, flags=0, title="Message"):
+        self.last_dialog_spec = messagebox_spec(text, flags, title);
         if self._messagebox_handler is not None:
             return self._messagebox_handler(str(text), int(flags or 0), str(title or "Message"));
         return 1;

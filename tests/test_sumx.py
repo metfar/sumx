@@ -1482,3 +1482,16 @@ RETURN cValor $ "SN"
 def test_sumide_xbase_profile_uses_sumx_syntax_lexer():
     from sumide.profiles import get_profile;
     assert get_profile("xbase").syntax == "sumx";
+
+
+def test_messagebox_also_builds_backend_neutral_dialog_spec():
+    from sumx.runtime import Runtime;
+    runtime = Runtime();
+    try:
+        assert runtime.messagebox("Careful", 48, "Warning") == 1;
+        spec = runtime.last_dialog_spec;
+        assert spec.kind == "warning";
+        assert spec.title == "Warning";
+        assert dict(spec.options)["flags"] == 48;
+    finally:
+        runtime.db.close();
