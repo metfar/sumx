@@ -838,4 +838,9 @@ sumx --gui --run program.prg
 
 The GUI switches presentation backend; they do not select a separate xBase editor, console or runtime implementation. The same Sum application state, syntax highlighter, commands, dialogs, keybindings, keyboard and mouse semantics are retained.
 
+
+## Graphical image export
+
+When sumX is running through `--gui`, **File -> Export graphical window as PNG...** exports the current graphical application window. This uses the common Sum application backend; it is not a separate GUI-only application implementation.
+
 <p align=center><b>- oOo -<b></p>

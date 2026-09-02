@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: sumx
-Version: 0.2.12
+Version: 0.2.13
 Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
 Author-email: William Martinez Bas <metfar@gmail.com>
 License: GPL-2.0-or-later
@@ -11,12 +11,12 @@ Classifier: Topic :: Database :: Database Engines/Servers
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: sumui>=0.1.0a6
-Requires-Dist: sumtui>=0.8.0a7
-Requires-Dist: sumide>=0.2.12
+Requires-Dist: sumui>=0.1.0a7
+Requires-Dist: sumtui>=0.8.0a8
+Requires-Dist: sumide>=0.2.13
 Requires-Dist: rich>=13.0
 Provides-Extra: gui
-Requires-Dist: sumgui>=0.2.0a8; extra == "gui"
+Requires-Dist: sumgui>=0.2.0a9; extra == "gui"
 Dynamic: license-file
 
 # sumX 0.2.2
@@ -858,5 +858,10 @@ sumx --gui --run program.prg
 ```
 
 The GUI switches presentation backend; they do not select a separate xBase editor, console or runtime implementation. The same Sum application state, syntax highlighter, commands, dialogs, keybindings, keyboard and mouse semantics are retained.
+
+
+## Graphical image export
+
+When sumX is running through `--gui`, **File -> Export graphical window as PNG...** exports the current graphical application window. This uses the common Sum application backend; it is not a separate GUI-only application implementation.
 
 <p align=center><b>- oOo -<b></p>

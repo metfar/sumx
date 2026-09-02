@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.13 - 2026-09-02
+- Inherits the common graphical-window PNG export action in `--gui` mode.
+- Updated coordinated dependency floors to the r16 UI/IDE stack.
+
 ## 0.2.12 - 2026-09-02
 - sumX now follows the ecosystem-wide ZX fresh-install default instead of imposing a separate xBase default theme.
 - XBASE, DBASE, FOXPRO, DOS and the other built-in themes remain selectable explicitly.
