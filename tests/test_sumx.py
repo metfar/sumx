@@ -1495,3 +1495,9 @@ def test_messagebox_also_builds_backend_neutral_dialog_spec():
         assert dict(spec.options)["flags"] == 48;
     finally:
         runtime.db.close();
+
+
+def test_sumx_editor_identifies_itself_as_sumx(tmp_path):
+    from sumx.editor_app import SumXEditorApp;
+    app = SumXEditorApp(None, config_path=tmp_path / "config.json");
+    assert app.app.title == "sumX";

@@ -55,6 +55,7 @@ class SumXEditorApp(ScriptIDE, SumXConsoleApp):
             kwargs["sumide_config_path"] = config_path;
         del config;
         super().__init__(path=path, language="xbase", theme=theme, **kwargs);
+        self.app.title = "sumX";
         self.command = self.command_view;
         self.command.on_submit = self._submit_xbase;
         self.path = Path(self.document.path).expanduser().resolve() if self.document.path is not None else Path("Untitled.prg");

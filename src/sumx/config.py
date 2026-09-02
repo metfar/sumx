@@ -58,7 +58,7 @@ def save_config(data, path=None):
 
 
 def theme_names():
-    preferred = ("ZX", "XBASE", "DBASE", "FOXPRO", "DOS", "RAR", "C64", "MSX", "Dark", "Light");
+    preferred = ("ZX", "XBASE", "DOS", "C64", "Dark", "Light");
     names = [name for name in preferred if name in THEMES];
     names.extend(name for name in THEMES if name not in names);
     return tuple(names);

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.11 - 2026-09-02
+## 0.2.12 - 2026-09-02
 - sumX now follows the ecosystem-wide ZX fresh-install default instead of imposing a separate xBase default theme.
 - XBASE, DBASE, FOXPRO, DOS and the other built-in themes remain selectable explicitly.
 - Updated theme examples and coordinated UI/IDE dependency floors.
