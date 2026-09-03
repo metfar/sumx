@@ -28,6 +28,7 @@ import re;
 from datetime import date, datetime;
 from decimal import Decimal;
 from pathlib import Path;
+from sumdata import read_rds, save_rds;
 
 from .picture import transform;
 from .values import SumCursor, SumObject, SumQuery, SumRow;
@@ -278,6 +279,8 @@ class ExpressionEvaluator:
             "SCREENCOLS": lambda: self.runtime.screen_size()[0],
             "SCREENROWS": lambda: self.runtime.screen_size()[1],
             "MESSAGEBOX": lambda text, flags=0, title="Message": self.runtime.messagebox(text, flags, title),
+            "READRDS": lambda path: read_rds(path),
+            "SAVERDS": lambda path, value: save_rds(path, value),
         };
         if key not in funcs:
             handler = getattr(self.runtime, "_user_function_handler", None);
