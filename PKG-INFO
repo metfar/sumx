@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: sumx
-Version: 0.2.13
+Version: 0.2.14
 Summary: A small xBase-inspired interpreter using SQLite and sumTUI.
 Author-email: William Martinez Bas <metfar@gmail.com>
 License: GPL-2.0-or-later
@@ -11,12 +11,12 @@ Classifier: Topic :: Database :: Database Engines/Servers
 Requires-Python: >=3.8
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: sumui>=0.1.0a7
-Requires-Dist: sumtui>=0.8.0a8
-Requires-Dist: sumide>=0.2.13
+Requires-Dist: sumui>=0.1.0a8
+Requires-Dist: sumtui>=0.8.0a9
+Requires-Dist: sumide>=0.2.14
 Requires-Dist: rich>=13.0
 Provides-Extra: gui
-Requires-Dist: sumgui>=0.2.0a9; extra == "gui"
+Requires-Dist: sumgui>=0.2.0a10; extra == "gui"
 Dynamic: license-file
 
 # sumX 0.2.2
@@ -863,5 +863,9 @@ The GUI switches presentation backend; they do not select a separate xBase edito
 ## Graphical image export
 
 When sumX is running through `--gui`, **File -> Export graphical window as PNG...** exports the current graphical application window. This uses the common Sum application backend; it is not a separate GUI-only application implementation.
+
+## r17 UI compatibility alignment
+
+sumX remains on the common TUI/GUI application path and is dependency-aligned with the r17 Sum UI layer. The BGI/conio/stdio compatibility modules live below language frontends so future xBase extensions can reuse the same presentation contracts without backend-specific code.
 
 <p align=center><b>- oOo -<b></p>

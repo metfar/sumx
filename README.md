@@ -843,4 +843,8 @@ The GUI switches presentation backend; they do not select a separate xBase edito
 
 When sumX is running through `--gui`, **File -> Export graphical window as PNG...** exports the current graphical application window. This uses the common Sum application backend; it is not a separate GUI-only application implementation.
 
+## r17 UI compatibility alignment
+
+sumX remains on the common TUI/GUI application path and is dependency-aligned with the r17 Sum UI layer. The BGI/conio/stdio compatibility modules live below language frontends so future xBase extensions can reuse the same presentation contracts without backend-specific code.
+
 <p align=center><b>- oOo -<b></p>

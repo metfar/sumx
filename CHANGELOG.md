@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.14 - 2026-09-02
+
+- Coordinated with the r17 common UI compatibility/runtime layer.
+
 ## 0.2.13 - 2026-09-02
 - Inherits the common graphical-window PNG export action in `--gui` mode.
 - Updated coordinated dependency floors to the r16 UI/IDE stack.
