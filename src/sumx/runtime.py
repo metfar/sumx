@@ -24,6 +24,8 @@
 #warnings.filterwarnings("ignore", category=UserWarning);
 import shutil;
 
+from sumui import CursorState, TextScreen, coerce_cursor_state;
+
 from .database import SumXDatabase;
 from .sql import execute_sql;
 from .ui_contracts import messagebox_spec;
@@ -43,6 +45,7 @@ class Runtime:
         self.windows = {};
         self.active_window = None;
         self._screen_size_provider = None;
+        self.text_screen = TextScreen(size_provider=self.screen_size, fallback=(80,25));
         self._messagebox_handler = None;
         self.last_dialog_spec = None;
         self.set_debug_level(debug_level);
@@ -124,6 +127,18 @@ class Runtime:
                 pass;
         size = shutil.get_terminal_size(fallback=(80, 25));
         return max(1, int(size.columns)), max(1, int(size.lines));
+
+    def set_text_screen(self, screen):
+        if not isinstance(screen, TextScreen): raise TypeError("screen must implement sumUI TextScreen");
+        self.text_screen = screen;
+        return screen;
+
+    def cursor(self, value=None, query=False):
+        if query: state = self.text_screen.cursor();
+        else: state = self.text_screen.cursor(value);
+        if state == CursorState.HIDDEN: return 0;
+        if state == CursorState.BLOCK: return 2;
+        return 1;
 
     def set_debug_level(self, level):
         if isinstance(level, bool):

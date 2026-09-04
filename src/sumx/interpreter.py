@@ -968,6 +968,17 @@ class Interpreter:
         if upper == "CLEAR":
             self.pending_gets = [];
             return ClearResult();
+        match = re.match(r"(?is)^CURSOR\s+(.+)$", text);
+        if match:
+            raw = match.group(1).strip(); key = raw.upper();
+            aliases = {
+                "OFF": False, "HIDE": False, "FALSE": False, ".F.": False,
+                "ON": True, "SHOW": True, "NORMAL": True, "UNDERSCORE": True, "UNDERLINE": True, "TRUE": True, ".T.": True,
+                "BLOCK": "block",
+            };
+            value = aliases[key] if key in aliases else self.evaluate(raw);
+            self.runtime.cursor(value);
+            return None;
 
         if re.match(r"(?is)^INPUT(?:\s|$)", text):
             return self._parse_input_request(text);

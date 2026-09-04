@@ -28,6 +28,7 @@ from pathlib import Path;
 import subprocess;
 import time;
 
+from sumui import TextScreen;
 from sumtui import message_color_scheme, Application, BrowseForm, Button, Column, CommandWindow, Dialog, FormField, FunctionBar, HBox, InputMask, Label, ListView, ListViewPane, MarkdownView, MarkdownViewPane, Menu, MenuBar, MenuDesktop, MenuItem, Panel, RecordForm, Separator, StatusBar, TableView, TextArea, TextInput, TextView, VBox;
 from sumtui.clipboard import clipboard;
 
@@ -74,6 +75,10 @@ class SumXConsoleApp:
         self.command = CommandWindow(prompt=". ", on_submit=self._submit);
         self.status = StatusBar(self.interpreter.runtime.db.status());
         self.interpreter.runtime.set_screen_size_provider(self._screen_size);
+        self.interpreter.runtime.set_text_screen(TextScreen(
+            size_provider=self._screen_size, cursor_setter=self.command.set_cursor_state,
+            cursor_getter=self.command.get_cursor_state, fallback=(80,25),
+        ));
         self.interpreter.runtime.set_messagebox_handler(self._runtime_messagebox);
         self.continuation = [];
         self._program_statements = [];
