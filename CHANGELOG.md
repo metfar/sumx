@@ -400,3 +400,6 @@
 - Added BASIC-like console `INPUT "Prompt" variable` (also accepts comma or `TO`) with type-aware assignment for existing variables.
 - INPUT is represented as a blocking request so programs continue only after the response is accepted.
 - Added INPUT help with a functional example.
+## 0.2.19
+
+- Added BEEP, SOUND, PLAY/ZXPLAY/GWPLAY, PLAY HOLD and PLAY STOP using the shared sumCore audio service.

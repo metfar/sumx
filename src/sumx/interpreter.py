@@ -24,6 +24,7 @@
 #warnings.filterwarnings("ignore", category=UserWarning);
 import ast;
 import re;
+from sumcore.audio import AudioEngine, MusicParseError, gw_ticks_to_seconds, spectrum_frequency_pitch, spectrum_pitch_frequency;
 from decimal import Decimal;
 from pathlib import Path;
 
@@ -156,6 +157,7 @@ class Interpreter:
         self.pending_gets = [];
         self.source_stack = [];
         self.user_functions = {};
+        self.audio = AudioEngine();
         self.runtime._user_function_handler = self._call_user_function;
 
     @staticmethod
@@ -943,6 +945,7 @@ class Interpreter:
             return None;
         upper = text.upper();
         if upper in ("QUIT", "EXIT"):
+            self.audio.stop_all();
             return QuitResult();
         return_match = re.match(r"(?is)^RETURN(?:\s+(.+))?$", text);
         if return_match is not None:
@@ -974,6 +977,45 @@ class Interpreter:
             if seconds < 0:
                 raise SumXError("PAUSE/DELAY duration must be non-negative");
             return DelayRequest(seconds);
+        match = re.match(r"(?is)^BEEP\s+(.+)$", text);
+        if match:
+            args = split_top_level(match.group(1));
+            if len(args) != 2: raise SumXError("BEEP requires duration,pitch");
+            duration = float(self.evaluate(args[0])); pitch = float(self.evaluate(args[1]));
+            if duration < 0: raise SumXError("BEEP duration must be non-negative");
+            self.audio.beep(spectrum_pitch_frequency(pitch), duration);
+            return None;
+        match = re.match(r"(?is)^SOUND\s+(.+)$", text);
+        if match:
+            args = split_top_level(match.group(1));
+            if len(args) != 2: raise SumXError("SOUND requires frequency,duration");
+            frequency = float(self.evaluate(args[0])); ticks = float(self.evaluate(args[1]));
+            if frequency < 37 or frequency > 32767: raise SumXError("SOUND frequency must be between 37 and 32767 Hz");
+            if ticks < 0: raise SumXError("SOUND duration must be non-negative");
+            self.audio.sound(spectrum_pitch_frequency(spectrum_frequency_pitch(frequency)), gw_ticks_to_seconds(ticks));
+            return None;
+        match = re.match(r"(?is)^(PLAY|ZXPLAY|GWPLAY)\s+(.+)$", text);
+        if match:
+            command = match.group(1).upper(); body = match.group(2).strip();
+            if body.upper() in ("STOP", "OFF"):
+                self.audio.stop_music(); return None;
+            mode = None; mode_match = re.match(r"(?is)^(FOREGROUND|BACKGROUND|HOLD)\b\s*(.*)$", body);
+            if mode_match: mode = mode_match.group(1).upper(); body = mode_match.group(2).strip();
+            args = split_top_level(body);
+            try:
+                if mode == "HOLD":
+                    if command == "GWPLAY" or len(args) not in (1,2): raise SumXError("PLAY HOLD requires [timeout,] one ZX string");
+                    timeout = 3.0 if len(args) == 1 else float(self.evaluate(args[0])); source = str(self.evaluate(args[-1]));
+                    self.audio.zxplay_hold(source, timeout=timeout);
+                elif command == "GWPLAY":
+                    if len(args) != 1: raise SumXError("GWPLAY requires one music string");
+                    self.audio.gwplay(str(self.evaluate(args[0])), mode=mode);
+                else:
+                    if not 1 <= len(args) <= 3: raise SumXError("{} requires one to three music strings".format(command));
+                    self.audio.zxplay([str(self.evaluate(arg)) for arg in args], background=(mode == "BACKGROUND"));
+            except MusicParseError as exc:
+                raise SumXError(str(exc)) from exc;
+            return None;
         match = re.match(r"(?is)^CURSOR\s+(.+)$", text);
         if match:
             raw = match.group(1).strip(); key = raw.upper();

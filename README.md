@@ -847,4 +847,16 @@ When sumX is running through `--gui`, **File -> Export graphical window as PNG..
 
 sumX remains on the common TUI/GUI application path and is dependency-aligned with the r17 Sum UI layer. The BGI/conio/stdio compatibility modules live below language frontends so future xBase extensions can reuse the same presentation contracts without backend-specific code.
 
-<p align=center><b>- oOo -<b></p>
+## Shared audio
+
+```xbase
+BEEP .25, 12
+SOUND 440, 18.2
+PLAY "T180O5cdefgabC"
+PLAY HOLD 3, "T240V15O4c"
+PLAY STOP
+```
+
+sumX uses `sumcore.audio`; xBase, sumBASIC, sumPY, sumR, and SumGUI now share the same service instead of maintaining separate synthesizers.
+
+<p align=center><b>- oOo -</b></p>
