@@ -1,4 +1,4 @@
-# sumX r20.2: common aliases, dynamic grid and cursor states.
+# sumX r20.2.2: common aliases, dynamic grid and visible cursor states.
 ? TRUE
 ? true
 ? FALSE
@@ -7,10 +7,18 @@
 ? nil
 ? none
 ? "Screen: " + STR(COLS()) + "x" + STR(ROWS())
+
+? "Cursor hidden for .75 s"
 CURSOR OFF
-? "cursor=" + STR(CURSOR())
+PAUSE .75
+
+? "Cursor normal/underscore for .75 s"
 CURSOR ON
-? "cursor=" + STR(CURSOR())
+PAUSE .75
+
+? "Cursor block for .75 s"
 CURSOR BLOCK
-? "cursor=" + STR(CURSOR())
+PAUSE .75
+
+? "Cursor restored to normal"
 CURSOR ON

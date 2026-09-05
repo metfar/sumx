@@ -47,6 +47,7 @@ class SumXEditorApp(ScriptIDE, SumXConsoleApp):
         self._program_active = False;
         self._program_quit = False;
         self._program_blocked = False;
+        self._program_delay_deadline = None;
         self._program_cooperative = False;
         self._program_idle_budget = 8;
         self._window_widgets = {};

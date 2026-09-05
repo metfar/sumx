@@ -547,6 +547,29 @@
         "!"
       ],
       "language": "xbase"
+    },
+    {
+      "name": "PAUSE",
+      "category": "Environment",
+      "summary": "Temporarily suspends program execution for the requested number of seconds while the SUM application event loop remains active. This makes visible UI state changes, including cursor style changes, observable between statements.",
+      "syntax": [
+        "PAUSE seconds",
+        "DELAY seconds"
+      ],
+      "example": "CURSOR OFF\nPAUSE .75\nCURSOR ON\nPAUSE .75\nCURSOR BLOCK\nPAUSE .75\nCURSOR ON",
+      "notes": [
+        "Duration is expressed in seconds and may be fractional.",
+        "Negative durations are rejected.",
+        "`DELAY` is an alias of `PAUSE`."
+      ],
+      "see_also": [
+        "CURSOR"
+      ],
+      "aliases": [
+        "DELAY",
+        "<p align=center><b>- oOo -</b></p>"
+      ],
+      "language": "xbase"
     }
   ]
 }

@@ -751,3 +751,41 @@ DO
 #### Aliases
 
 !
+### PAUSE
+
+Temporarily suspends program execution for the requested number of seconds while the SUM application event loop remains active. This makes visible UI state changes, including cursor style changes, observable between statements.
+
+#### Syntax
+
+```text
+PAUSE seconds
+DELAY seconds
+```
+
+#### Functional example
+
+```xbase
+CURSOR OFF
+PAUSE .75
+CURSOR ON
+PAUSE .75
+CURSOR BLOCK
+PAUSE .75
+CURSOR ON
+```
+
+#### Notes
+
+- Duration is expressed in seconds and may be fractional.
+- Negative durations are rejected.
+- `DELAY` is an alias of `PAUSE`.
+
+#### See also
+
+CURSOR
+
+#### Aliases
+
+DELAY
+
+<p align=center><b>- oOo -</b></p>

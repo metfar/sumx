@@ -31,7 +31,7 @@ from .database import split_top_level;
 from .expressions import ExpressionEvaluator;
 from .helpdb import find_topic, index_markdown;
 from .picture import parse_picture, picture_capacity, picture_choices, picture_display_width, strip_picture_literals, transform;
-from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, FormRequest, GetField, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ReturnResult, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
+from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, DelayRequest, FormRequest, GetField, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ReturnResult, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
 from .runtime import Runtime;
 from .sql import parse_sql_source;
 from .statements import split_statements;
@@ -340,10 +340,10 @@ class Interpreter:
                 raise SumXError("Unexpected {}".format(statement.upper()));
             result = self._execute_one(statement, interactive=interactive);
             if result is not None:
-                if isinstance(result, (ReadRequest, InputRequest)):
+                if isinstance(result, (ReadRequest, InputRequest, DelayRequest)):
                     result.remaining = statements[index + 1:];
                 results.append(result);
-            if isinstance(result, (QuitResult, ReturnResult, ReadRequest, InputRequest)):
+            if isinstance(result, (QuitResult, ReturnResult, ReadRequest, InputRequest, DelayRequest)):
                 break;
             index += 1;
         return results;
@@ -968,6 +968,12 @@ class Interpreter:
         if upper == "CLEAR":
             self.pending_gets = [];
             return ClearResult();
+        match = re.match(r"(?is)^(?:PAUSE|DELAY)\s+(.+)$", text);
+        if match:
+            seconds = float(self.evaluate(match.group(1)));
+            if seconds < 0:
+                raise SumXError("PAUSE/DELAY duration must be non-negative");
+            return DelayRequest(seconds);
         match = re.match(r"(?is)^CURSOR\s+(.+)$", text);
         if match:
             raw = match.group(1).strip(); key = raw.upper();

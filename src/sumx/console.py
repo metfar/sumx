@@ -37,7 +37,7 @@ from .config import default_config_path, load_config, resolve_theme, save_config
 from .helpdb import TOPICS, find_topic, index_markdown, topic_names;
 from .interpreter import HELP_TEXT, Interpreter;
 from .picture import picture_input_char;
-from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, FormRequest, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
+from .results import AppendRequest, BatchResult, BrowseRequest, ClearResult, DelayRequest, FormRequest, HelpRequest, InputRequest, OutputResult, QuitResult, ReadRequest, ScreenGetResult, ScreenWriteResult, TableResult, WindowRequest;
 from .statements import needs_continuation, split_statements;
 
 
@@ -87,6 +87,7 @@ class SumXConsoleApp:
         self._program_active = False;
         self._program_quit = False;
         self._program_blocked = False;
+        self._program_delay_deadline = None;
         self._program_cooperative = False;
         self._program_idle_budget = 8;
         self._window_widgets = {};
@@ -349,12 +350,26 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         self._program_name = None;
         self._program_active = False;
         self._program_blocked = False;
+        self._program_delay_deadline = None;
+        self.app.remove_idle(self._program_delay_idle);
         self._update_status();
         return None;
 
     def _resume_program(self):
         self._program_blocked = False;
         return self._continue_program();
+
+    def _program_delay_idle(self):
+        if not self._program_active or self._program_delay_deadline is None:
+            self.app.remove_idle(self._program_delay_idle);
+            return False;
+        if time.monotonic() < self._program_delay_deadline:
+            return False;
+        self._program_delay_deadline = None;
+        self._program_blocked = False;
+        self.app.remove_idle(self._program_delay_idle);
+        self._continue_program();
+        return True;
 
     def _handle_program_result(self, result):
         if result is None:
@@ -389,6 +404,12 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
         if isinstance(result, ReadRequest):
             self._program_blocked = True;
             self._begin_read(result, after_done=self._resume_program);
+            return True;
+        if isinstance(result, DelayRequest):
+            self._program_blocked = True;
+            self._program_delay_deadline = time.monotonic() + max(0.0, float(result.seconds));
+            self.app.add_idle(self._program_delay_idle);
+            self.app.invalidate();
             return True;
         if isinstance(result, QuitResult):
             self._program_quit = True;
@@ -556,6 +577,18 @@ When compiling, sumX freezes the effective theme. Built-in themes are stored by 
             self._show_input(result);
         elif isinstance(result, ReadRequest):
             self._begin_read(result);
+        elif isinstance(result, DelayRequest):
+            deadline = time.monotonic() + max(0.0, float(result.seconds));
+            def resume_delay():
+                if time.monotonic() < deadline:
+                    return False;
+                self.app.remove_idle(resume_delay);
+                if result.remaining:
+                    self._handle_result(self.interpreter.execute_remaining(result.remaining, interactive=True));
+                self.app.invalidate();
+                return True;
+            self.app.add_idle(resume_delay);
+            self.app.invalidate();
         elif isinstance(result, ClearResult):
             self.command.clear();
         elif isinstance(result, QuitResult):

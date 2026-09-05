@@ -17,3 +17,19 @@ def test_sumx_common_aliases_grid_and_cursor():
     interp.execute("CURSOR ON",interactive=False); assert interp.evaluate("CURSOR()") == 1;
     interp.execute("CURSOR BLOCK",interactive=False); assert interp.evaluate("CURSOR()") == 2;
     assert states == [CursorState.HIDDEN,CursorState.NORMAL,CursorState.BLOCK];
+
+
+def test_sumx_pause_delay_stops_statement_batch_until_resumed():
+    from sumx.results import BatchResult, DelayRequest;
+    interp = Interpreter(); states = [];
+    interp.runtime.set_text_screen(TextScreen(size_provider=lambda: (80,25), cursor_setter=states.append));
+    result = interp.execute("CURSOR OFF; PAUSE .25; CURSOR BLOCK", interactive=True);
+    assert isinstance(result, DelayRequest) or isinstance(result, BatchResult);
+    delay = result if isinstance(result, DelayRequest) else next(item for item in result.results if isinstance(item, DelayRequest));
+    assert abs(delay.seconds - .25) < 1e-9;
+    assert delay.remaining == ["CURSOR BLOCK"];
+    assert interp.evaluate("CURSOR()") == 0;
+    interp.execute_remaining(delay.remaining, interactive=True);
+    assert interp.evaluate("CURSOR()") == 2;
+    delay2 = interp.execute("DELAY .1", interactive=False);
+    assert isinstance(delay2, DelayRequest) and abs(delay2.seconds - .1) < 1e-9;

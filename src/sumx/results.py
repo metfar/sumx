@@ -120,6 +120,12 @@ class WindowRequest:
 
 
 @dataclass
+class DelayRequest:
+    seconds: float;
+    remaining: list = None;
+
+
+@dataclass
 class ClearResult:
     pass;
 
