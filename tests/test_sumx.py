@@ -1501,3 +1501,23 @@ def test_sumx_editor_identifies_itself_as_sumx(tmp_path):
     from sumx.editor_app import SumXEditorApp;
     app = SumXEditorApp(None, config_path=tmp_path / "config.json");
     assert app.app.title == "sumX";
+
+
+class AudioCommandContractTests(InterpreterTestCase):
+    class FakeAudio:
+        def __init__(self): self.calls=[];
+        def beep(self,frequency,duration): self.calls.append(("beep",frequency,duration));
+        def sound(self,frequency,duration): self.calls.append(("sound",frequency,duration));
+        def zxplay(self,strings,background=False): self.calls.append(("play",strings,background));
+        def zxplay_hold(self,source,timeout=3.0): self.calls.append(("hold",source,timeout));
+        def gwplay(self,source,mode=None): self.calls.append(("gwplay",source,mode));
+        def stop_music(self): self.calls.append(("stop",));
+
+    def setUp(self):
+        super().setUp(); self.x.audio=self.FakeAudio();
+
+    def test_beep_sound_and_play_remain_language_commands_over_sumcore_audio(self):
+        self.x.execute("BEEP .25, 12");
+        self.x.execute("SOUND 440, 18.2");
+        self.x.execute('PLAY "T180O5c"');
+        self.assertEqual([call[0] for call in self.x.audio.calls],["beep","sound","play"]);
