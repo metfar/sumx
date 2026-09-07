@@ -859,4 +859,6 @@ PLAY STOP
 
 sumX uses `sumcore.audio`; xBase, sumBASIC, sumPY, sumR, and SumGUI now share the same service instead of maintaining separate synthesizers.
 
+Audio example: `examples/audio.prg` demonstrates `BEEP`, `SOUND`, `PLAY`, `PLAY HOLD` and `PLAY STOP` through the shared `sumcore` service.
+
 <p align=center><b>- oOo -</b></p>
