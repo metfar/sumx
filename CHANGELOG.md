@@ -403,3 +403,5 @@
 ## 0.2.20
 
 - Added BEEP, SOUND, PLAY/ZXPLAY/GWPLAY, PLAY HOLD and PLAY STOP using the shared sumCore audio service.
+
+<p align=center><b>- oOo -</b></p>

@@ -29,6 +29,8 @@ from datetime import date, datetime;
 from decimal import Decimal;
 from pathlib import Path;
 from sumdata import read_rds, save_rds;
+from sumcore.text import repeat, left, right, mid, instr, find, ltrim, rtrim, trim, alltrim, like, ilike;
+from sumcore.formatting import numformat, dateformat, textformat, boolformat;
 
 from .picture import transform;
 from .values import SumCursor, SumObject, SumQuery, SumRow;
@@ -253,7 +255,23 @@ class ExpressionEvaluator:
         funcs = {
             "LEN": lambda value: len(value),
             "SPACE": lambda count: " " * max(0, int(count)),
-            "REPLICATE": lambda value, count: value * max(0, int(count)),
+            "REPLICATE": lambda value, count: repeat(value,count),
+            "REPEAT": lambda value, count: repeat(value,count),
+            "LEFT": lambda value, count: left(value,count),
+            "RIGHT": lambda value, count: right(value,count),
+            "MID": lambda value, start, length=None: mid(value,start,length),
+            "INSTR": lambda *values: instr(values[1],values[2],values[0]) if len(values)==3 else instr(values[0],values[1]),
+            "FIND": lambda value, needle, start=0: find(value,needle,start),
+            "LTRIM": lambda value, what=None: ltrim(value,what),
+            "RTRIM": lambda value, what=None: rtrim(value,what),
+            "TRIM": lambda value, what=None: trim(value,what),
+            "ALLTRIM": lambda value, what=None: alltrim(value,what),
+            "LIKE": lambda value, pattern: like(value,pattern),
+            "ILIKE": lambda value, pattern: ilike(value,pattern),
+            "NUMFORMAT": lambda value, fmt="general": numformat(value,fmt),
+            "DATEFORMAT": lambda value, fmt="date.iso": dateformat(value,fmt),
+            "TEXTFORMAT": lambda value, fmt="text": textformat(value,fmt),
+            "BOOLFORMAT": lambda value, fmt="FALSE|TRUE|UNKNOWN": boolformat(value,fmt),
             "UPPER": lambda value: str(value).upper(),
             "LOWER": lambda value: str(value).lower(),
             "STR": lambda value: str(value),

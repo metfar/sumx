@@ -861,4 +861,18 @@ sumX uses `sumcore.audio`; xBase, sumBASIC, sumPY, sumR, and SumGUI now share th
 
 Audio example: `examples/audio.prg` demonstrates `BEEP`, `SOUND`, `PLAY`, `PLAY HOLD` and `PLAY STOP` through the shared `sumcore` service.
 
+## Shared text and format functions
+
+The expression engine now uses the shared `sumcore` implementations for `REPEAT`/`REPLICATE`, zero-based `MID` and `INSTR`, `TRIM`/`ALLTRIM`, `LIKE`/`ILIKE`, and the `NUMFORMAT`, `DATEFORMAT`, `TEXTFORMAT`, `BOOLFORMAT` family.
+
+Examples:
+
+```text
+REPEAT("ab",3)
+MID("abcdef",0,1)
+INSTR("abcdef","cd")
+NUMFORMAT(5,"$ 0000.00")
+BOOLFORMAT(NULL,"NO|SI|OMITIDO")
+```
+
 <p align=center><b>- oOo -</b></p>
